@@ -48,10 +48,7 @@ jobs:
       run: npx playwright install --with-deps
 
     - name: Run Playwright E2E Tests
-      run: |
-        php artisan serve --port=8001 &
-        sleep 3
-        npx playwright test -c qa-kit/e2e/playwright.config.ts
+      run: npx playwright test -c qa-kit/e2e/playwright.config.ts
       env:
         APP_URL: http://localhost:8001
         APP_ENV: e2e
