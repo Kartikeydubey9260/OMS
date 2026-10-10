@@ -10,7 +10,7 @@ export default defineConfig({
     globalSetup: "./global-setup.ts",
     timeout: 30_000,
     expect: { timeout: 7_000 },
-    fullyParallel: true,
+    fullyParallel: false,
     workers: 2,
     retries: 0, // never hide flakiness with retries
     forbidOnly: true,

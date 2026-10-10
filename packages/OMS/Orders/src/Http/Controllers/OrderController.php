@@ -232,7 +232,8 @@ class OrderController extends Controller
 
         $order = DB::transaction(function () use ($validated, $pricing, $user) {
             $lastOrder = Order::withTrashed()->latest('id')->first();
-            $nextNum = ($lastOrder ? $lastOrder->id : 0) + 1001;
+            $baseNum = ($lastOrder ? $lastOrder->id : 0) + 1001;
+            $nextNum = $baseNum + rand(0, 1000000);
             while (Order::withTrashed()->where('order_number', "ORD-{$nextNum}")->exists()) {
                 $nextNum++;
             }
