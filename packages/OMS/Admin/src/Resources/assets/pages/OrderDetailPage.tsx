@@ -303,7 +303,7 @@ export const OrderDetailPage: React.FC = () => {
                             {capitalize(order.priority)}
                         </span>
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">Placed on {order.order_date}</p>
+                    <p className="text-xs text-gray-500 mt-1">Placed on {order.order_date}</p>
                 </div>
 
                 {/* Actions Toolbar */}
@@ -391,7 +391,7 @@ export const OrderDetailPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Customer Info Card */}
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-2">
-                    <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Customer</h2>
+                    <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Customer</h2>
                     <div data-testid="order-customer-name" className="text-base font-bold text-gray-900">
                         {order.customer?.name || "N/A"}
                     </div>
@@ -399,31 +399,31 @@ export const OrderDetailPage: React.FC = () => {
                         {order.customer?.email}
                     </div>
                     {order.customer?.phone && (
-                        <div className="text-xs text-gray-400">{order.customer.phone}</div>
+                        <div className="text-xs text-gray-500">{order.customer.phone}</div>
                     )}
                 </div>
 
                 {/* Assignment & Details */}
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-2">
-                    <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Fulfillment</h2>
+                    <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Fulfillment</h2>
                     <div className="text-sm text-gray-600">
                         Assignee:{" "}
                         <span data-testid="order-assignee" className="font-bold text-gray-900">
                             {order.assigned_user?.name || "Unassigned"}
                         </span>
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-gray-500">
                         Priority: <span className="font-semibold capitalize text-gray-700">{order.priority}</span>
                     </div>
                 </div>
 
                 {/* Financial Summary */}
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-2">
-                    <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Financial Total</h2>
+                    <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Financial Total</h2>
                     <div data-testid="order-total" className="text-2xl font-black text-indigo-700">
                         {formatMoney(order.total)}
                     </div>
-                    <div className="text-xs text-gray-400 flex justify-between">
+                    <div className="text-xs text-gray-500 flex justify-between">
                         <span>Subtotal: {formatMoney(order.subtotal)}</span>
                         <span>Tax: {formatMoney(order.tax_amount)}</span>
                     </div>
@@ -478,7 +478,7 @@ export const OrderDetailPage: React.FC = () => {
                     <h2 className="text-base font-bold text-gray-900 mb-4">Status History Timeline</h2>
                     <div data-testid="order-timeline" className="space-y-4">
                         {(order.status_history || []).length === 0 ? (
-                            <div className="text-xs text-gray-400">No status changes yet.</div>
+                            <div className="text-xs text-gray-500">No status changes yet.</div>
                         ) : (
                             order.status_history.map((hist, idx) => (
                                 <div key={hist.id || idx} className="flex gap-3 text-sm">
@@ -493,7 +493,7 @@ export const OrderDetailPage: React.FC = () => {
                                         {hist.remarks && (
                                             <div className="text-xs text-gray-600 italic mt-0.5">{hist.remarks}</div>
                                         )}
-                                        <div className="text-[10px] text-gray-400 mt-1">
+                                        <div className="text-[10px] text-gray-500 mt-1">
                                             by {hist.user?.name || hist.changed_by?.name || hist.changer?.name || "System"} • {new Date(hist.created_at).toLocaleString()}
                                         </div>
                                     </div>
@@ -528,7 +528,7 @@ export const OrderDetailPage: React.FC = () => {
                             );
 
                             if (combined.length === 0) {
-                                return <div className="text-xs text-gray-400">No activity logged.</div>;
+                                return <div className="text-xs text-gray-500">No activity logged.</div>;
                             }
 
                             return combined.map((entry) => (
@@ -537,8 +537,8 @@ export const OrderDetailPage: React.FC = () => {
                                     <div className="text-gray-900 font-medium whitespace-pre-wrap">
                                         {entry.text}
                                     </div>
-                                    <div className="text-[10px] text-gray-400">
-                                        {entry.author} • {new Date(entry.date).toLocaleString()}
+                                    <div className="text-[10px] text-gray-500">
+                                        {" "}{entry.author} • {new Date(entry.date).toLocaleString()}
                                     </div>
                                 </div>
                             ));

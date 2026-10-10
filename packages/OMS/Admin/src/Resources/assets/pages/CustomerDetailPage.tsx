@@ -128,7 +128,7 @@ export const CustomerDetailPage: React.FC = () => {
                 <h2 className="text-lg font-bold text-gray-900">Recent Customer Orders</h2>
                 <div data-testid="customer-recent-orders" className="overflow-x-auto">
                     {(customer.recent_orders || []).length === 0 ? (
-                        <div className="text-sm text-gray-400 py-4">No recent orders for this customer.</div>
+                        <div className="text-sm text-gray-500 py-4">No recent orders for this customer.</div>
                     ) : (
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50 text-xs font-semibold text-gray-600 uppercase">

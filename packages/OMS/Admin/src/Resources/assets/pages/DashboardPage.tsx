@@ -221,14 +221,14 @@ export const DashboardPage: React.FC = () => {
 
                     <div data-testid="chart-revenue" className="w-full min-h-[240px] flex items-end gap-2 pt-6">
                         {trend.length === 0 ? (
-                            <div className="w-full text-center text-xs text-gray-400 py-12">No trend data available</div>
+                            <div className="w-full text-center text-xs text-gray-500 py-12">No trend data available</div>
                         ) : (
                             trend.map((point, idx) => {
                                 const maxRev = Math.max(...trend.map((t) => Number(t.revenue)), 1);
                                 const heightPct = Math.round((Number(point.revenue) / maxRev) * 100);
                                 return (
                                     <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
-                                        <span className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+                                        <span className="text-[10px] text-gray-500 opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
                                             {formatMoney(point.revenue)}
                                         </span>
                                         <div

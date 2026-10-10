@@ -62,9 +62,6 @@ export async function request<T = any>(
 
     if (res.status === 401) {
         clearStoredAuth();
-        if (window.location.pathname !== "/login") {
-            window.location.href = "/login";
-        }
     }
 
     let json: ApiResponse<T> | null = null;

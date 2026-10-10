@@ -1,6 +1,6 @@
 import { request, APIRequestContext } from "@playwright/test";
 
-export const API_URL = process.env.E2E_API_URL ?? "http://localhost:8001/api";
+export const API_URL = process.env.E2E_API_URL ?? "http://127.0.0.1:8001/api";
 
 export type Role = "admin" | "manager" | "manager2" | "staff" | "staff2";
 

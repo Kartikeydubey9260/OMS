@@ -72,7 +72,7 @@ export const AuditLogsPage: React.FC = () => {
                                     <td className="px-6 py-4 text-xs font-mono text-gray-500">
                                         {l.ip_address || "—"}
                                     </td>
-                                    <td className="px-6 py-4 text-xs text-gray-400">
+                                    <td className="px-6 py-4 text-xs text-gray-500">
                                         {new Date(l.created_at).toLocaleString()}
                                     </td>
                                 </tr>

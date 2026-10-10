@@ -19,7 +19,7 @@ export default defineConfig({
         ["html", { open: "never", outputFolder: "./playwright-report" }],
     ],
     use: {
-        baseURL: `http://localhost:${PORT}`,
+        baseURL: `http://127.0.0.1:${PORT}`,
         trace: "retain-on-failure",
         screenshot: "only-on-failure",
         video: "off",
@@ -48,9 +48,9 @@ export default defineConfig({
     ],
     webServer: {
         // APP_ENV=e2e makes Laravel read .env.e2e. Built SPA assets are produced in global-setup.
-        command: `APP_ENV=e2e PHP_CLI_SERVER_WORKERS=4 php artisan serve --port=${PORT} --no-reload`,
+        command: `npx cross-env APP_ENV=e2e PHP_CLI_SERVER_WORKERS=4 php artisan serve --port=${PORT} --no-reload`,
         cwd: "../..",
-        url: `http://localhost:${PORT}/api/health`,
+        url: `http://127.0.0.1:${PORT}/api/health`,
         reuseExistingServer: reuse,
         timeout: 60_000,
     },

@@ -405,7 +405,7 @@ export const OrdersListPage: React.FC = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 <div>{o.customer?.name || "N/A"}</div>
-                                                <div className="text-xs text-gray-400">{o.customer?.email}</div>
+                                                <div className="text-xs text-gray-500">{o.customer?.email}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {o.order_date}

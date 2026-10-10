@@ -54,7 +54,7 @@ export const Modal: React.FC<ModalProps> = ({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                        className="text-gray-500 hover:text-gray-600 focus:outline-none"
                     >
                         ✕
                     </button>
