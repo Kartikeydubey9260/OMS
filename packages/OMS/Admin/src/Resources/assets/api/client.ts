@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getStoredAuth, clearStoredAuth } from "../state/auth";
 
 export class ApiClientError extends Error {
@@ -14,10 +15,11 @@ export class ApiClientError extends Error {
     }
 }
 
-export interface ApiResponse<T = unknown> {
+export interface ApiResponse<T = any> {
     success: boolean;
     message?: string;
     data: T;
+    code?: string;
     meta?: {
         total?: number;
         per_page?: number;
@@ -27,7 +29,7 @@ export interface ApiResponse<T = unknown> {
     errors?: Record<string, string[]>;
 }
 
-export async function request<T = unknown>(
+export async function request<T = any>(
     endpoint: string,
     options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
@@ -86,26 +88,26 @@ export async function request<T = unknown>(
 }
 
 export const api = {
-    get: <T = unknown>(url: string, options?: RequestInit) =>
+    get: <T = any>(url: string, options?: RequestInit) =>
         request<T>(url, { method: "GET", ...options }),
-    post: <T = unknown>(url: string, body?: unknown, options?: RequestInit) =>
+    post: <T = any>(url: string, body?: any, options?: RequestInit) =>
         request<T>(url, {
             method: "POST",
             body: body ? JSON.stringify(body) : undefined,
             ...options,
         }),
-    put: <T = unknown>(url: string, body?: unknown, options?: RequestInit) =>
+    put: <T = any>(url: string, body?: any, options?: RequestInit) =>
         request<T>(url, {
             method: "PUT",
             body: body ? JSON.stringify(body) : undefined,
             ...options,
         }),
-    patch: <T = unknown>(url: string, body?: unknown, options?: RequestInit) =>
+    patch: <T = any>(url: string, body?: any, options?: RequestInit) =>
         request<T>(url, {
             method: "PATCH",
             body: body ? JSON.stringify(body) : undefined,
             ...options,
         }),
-    delete: <T = unknown>(url: string, options?: RequestInit) =>
+    delete: <T = any>(url: string, options?: RequestInit) =>
         request<T>(url, { method: "DELETE", ...options }),
 };
