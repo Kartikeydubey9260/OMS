@@ -1,0 +1,81 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        tools: composer:v2
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Copy .env
+      run: php -r "file_exists('.env') || copy('.env.example', '.env'); copy('.env.e2e', '.env');"
+
+    - name: Install PHP Dependencies
+      run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+    - name: Generate key
+      run: php artisan key:generate
+
+    - name: Create SQLite Database
+      run: |
+        mkdir -p database
+        touch database/database.sqlite
+
+    - name: Run Migrations and Seed
+      run: php artisan migrate:fresh --seed --force
+
+    - name: Run Laravel Pint (Code Style)
+      run: ./vendor/bin/pint --test
+      continue-on-error: true
+
+    - name: Run PHPStan (Static Analysis)
+      run: ./vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+      continue-on-error: true
+
+    - name: Run Pest (Unit & Feature Tests)
+      run: ./vendor/bin/pest
+
+    - name: Install Node Dependencies
+      run: npm ci
+
+    - name: Build Frontend Assets
+      run: npm run build
+
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+
+    - name: Run Playwright E2E Tests
+      run: |
+        php artisan serve --port=8001 &
+        sleep 3
+        npx playwright test -c qa-kit/e2e/playwright.config.ts
+      env:
+        APP_URL: http://localhost:8001
+        APP_ENV: e2e
+        DB_CONNECTION: sqlite
+        DB_DATABASE: database/database.sqlite
+
+    - name: Upload Playwright Report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 7
