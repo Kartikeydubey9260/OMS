@@ -74,7 +74,7 @@ class InventoryService implements InventoryServiceContract
             $lockedProduct->stock_quantity = $newStock;
             $lockedProduct->save();
 
-            AuditLogger::log(
+            AuditLogger::record(
                 action: 'product.stock_adjusted',
                 auditableType: 'product',
                 auditableId: $lockedProduct->id,

@@ -46,6 +46,7 @@ function makeUser(string $role, array $attrs = []): User
     seedRoles();
     $user = User::factory()->create($attrs + ['is_active' => true]);
     $user->assignRole($role);
+    $user->load('roles.permissions', 'permissions');
 
     return $user;
 }

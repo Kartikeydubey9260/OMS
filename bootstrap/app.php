@@ -6,7 +6,10 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
+use OMS\Inventory\Exceptions\InsufficientStockException;
+use OMS\Orders\Exceptions\InvalidStatusTransitionException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -69,11 +72,37 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (ValidationException $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
+                $flatErrors = $e->errors();
+                $undotErrors = Arr::undot($flatErrors);
+                $mergedErrors = array_merge($flatErrors, $undotErrors);
+
                 return response()->json([
                     'success' => false,
                     'message' => $e->getMessage(),
                     'code' => 'VALIDATION_ERROR',
-                    'errors' => $e->errors(),
+                    'errors' => $mergedErrors,
+                ], 422);
+            }
+        });
+
+        $exceptions->render(function (InsufficientStockException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                    'code' => 'INSUFFICIENT_STOCK',
+                    'errors' => $e->getErrors(),
+                ], 422);
+            }
+        });
+
+        $exceptions->render(function (InvalidStatusTransitionException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                    'code' => 'INVALID_STATUS_TRANSITION',
+                    'errors' => [],
                 ], 422);
             }
         });

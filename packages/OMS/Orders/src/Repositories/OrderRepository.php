@@ -15,28 +15,41 @@ class OrderRepository
      */
     public function paginate(array $filters = [], int $perPage = 15, ?User $user = null): LengthAwarePaginator
     {
-        $query = Order::query()->with(['customer', 'assignee', 'creator']);
+        $query = Order::query()->with([
+            'customer:id,name,email',
+            'assignee:id,name,email',
+        ]);
 
-        if ($user && $user->can('orders.view_assigned') && ! $user->can('orders.view_all')) {
+        // Staff scope: if user cannot view all orders, restrict to assigned orders
+        if ($user && (! $user->can('orders.view_all'))) {
             $query->where('assigned_to', $user->id);
         }
 
+        // Status filter (single or array)
         if (! empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            if (is_array($filters['status'])) {
+                $query->whereIn('status', $filters['status']);
+            } else {
+                $query->where('status', $filters['status']);
+            }
         }
 
+        // Customer filter
         if (! empty($filters['customer_id'])) {
-            $query->where('customer_id', $filters['customer_id']);
+            $query->where('customer_id', (int) $filters['customer_id']);
         }
 
-        if (! empty($filters['assigned_to'])) {
-            $query->where('assigned_to', $filters['assigned_to']);
+        // Assignee filter (only applies if user has orders.view_all)
+        if (! empty($filters['assigned_to']) && (! $user || $user->can('orders.view_all'))) {
+            $query->where('assigned_to', (int) $filters['assigned_to']);
         }
 
+        // Priority filter
         if (! empty($filters['priority'])) {
             $query->where('priority', $filters['priority']);
         }
 
+        // Date range filters
         if (! empty($filters['date_from'])) {
             $query->whereDate('order_date', '>=', $filters['date_from']);
         }
@@ -45,24 +58,39 @@ class OrderRepository
             $query->whereDate('order_date', '<=', $filters['date_to']);
         }
 
-        if (! empty($filters['search'])) {
-            $search = $filters['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('order_number', 'like', "%{$search}%")
-                    ->orWhereHas('customer', function ($cq) use ($search) {
-                        $cq->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
+        // Search: order number, customer name, customer email, product name, product sku, assignee name
+        if (isset($filters['search']) && $filters['search'] !== '') {
+            $rawSearch = (string) $filters['search'];
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $rawSearch);
+
+            $query->where(function ($q) use ($escaped) {
+                $q->where('order_number', 'like', "%{$escaped}%")
+                    ->orWhereHas('customer', function ($cq) use ($escaped) {
+                        $cq->where('name', 'like', "%{$escaped}%")
+                            ->orWhere('email', 'like', "%{$escaped}%");
+                    })
+                    ->orWhereHas('items', function ($iq) use ($escaped) {
+                        $iq->where('product_name', 'like', "%{$escaped}%")
+                            ->orWhere('sku', 'like', "%{$escaped}%");
+                    })
+                    ->orWhereHas('assignee', function ($aq) use ($escaped) {
+                        $aq->where('name', 'like', "%{$escaped}%");
                     });
             });
         }
 
+        // Sorting
         $sort = $filters['sort'] ?? 'order_date';
         $direction = strtolower($filters['direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
 
-        if (in_array($sort, ['id', 'order_number', 'order_date', 'total', 'created_at', 'status', 'priority'], true)) {
+        if ($sort === 'customer') {
+            $query->join('customers', 'orders.customer_id', '=', 'customers.id')
+                ->orderBy('customers.name', $direction)
+                ->select('orders.*');
+        } elseif (in_array($sort, ['order_date', 'total', 'status', 'priority', 'created_at'], true)) {
             $query->orderBy($sort, $direction);
         } else {
-            $query->orderBy('order_date', 'desc')->latest('id');
+            $query->latest('id');
         }
 
         return $query->paginate($perPage);
@@ -77,12 +105,12 @@ class OrderRepository
     {
         return Order::with([
             'customer',
-            'creator',
-            'assignee',
-            'items.product',
-            'statusHistories.changedBy',
-            'notes.user',
-            'activities.user',
+            'creator:id,name,email',
+            'assignee:id,name,email',
+            'items',
+            'statusHistories.changedBy:id,name,email',
+            'notesList.user:id,name,email',
+            'activities.user:id,name,email',
         ])->find($id);
     }
 

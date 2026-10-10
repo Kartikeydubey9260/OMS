@@ -61,7 +61,7 @@ class CustomerRepository
         $customer->pending_orders = (clone $orders)->where('status', 'pending')->count();
         $customer->completed_orders = (clone $orders)->where('status', 'completed')->count();
         $customer->cancelled_orders = (clone $orders)->where('status', 'cancelled')->count();
-        $customer->total_order_value = (string) (clone $orders)->where('status', '!=', 'cancelled')->sum('total');
+        $customer->total_order_value = (string) (clone $orders)->whereNotIn('status', ['cancelled', 'draft'])->sum('total');
         $customer->recent_orders = $customer->orders;
 
         return $customer;

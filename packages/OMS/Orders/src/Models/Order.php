@@ -26,7 +26,7 @@ use OMS\Users\Models\User;
  * @property int|null $assigned_to
  * @property OrderStatus $status
  * @property OrderPriority $priority
- * @property string $order_date
+ * @property Carbon $order_date
  * @property string|float $subtotal
  * @property string|null $discount_type
  * @property string|float $discount_value
@@ -130,6 +130,11 @@ class Order extends Model implements OrderContract
     public function notes(): HasMany
     {
         return $this->hasMany(OrderNote::class)->latest('created_at');
+    }
+
+    public function notesList(): HasMany
+    {
+        return $this->notes();
     }
 
     public function activities(): HasMany

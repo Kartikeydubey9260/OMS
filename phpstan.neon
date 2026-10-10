@@ -7,3 +7,4 @@ parameters:
         - packages
 
     level: 5
+    treatPhpDocTypesAsCertain: false

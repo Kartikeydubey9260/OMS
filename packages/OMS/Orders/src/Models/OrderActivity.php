@@ -7,9 +7,21 @@ namespace OMS\Orders\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use OMS\Orders\Contracts\OrderActivity as OrderActivityContract;
 use OMS\Users\Models\User;
 
+/**
+ * @property int $id
+ * @property int $order_id
+ * @property int $user_id
+ * @property string $type
+ * @property string $description
+ * @property array<string, mixed>|null $meta
+ * @property Carbon|null $created_at
+ * @property-read Order $order
+ * @property-read User|null $user
+ */
 class OrderActivity extends Model implements OrderActivityContract
 {
     use HasFactory;

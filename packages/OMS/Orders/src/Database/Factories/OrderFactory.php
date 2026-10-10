@@ -25,9 +25,9 @@ class OrderFactory extends Factory
     public function definition(): array
     {
         self::$orderSequence++;
-        $subtotal = 100.00;
-        $taxAmount = 10.00;
-        $total = 110.00;
+        $subtotal = 20.00;
+        $taxAmount = 2.00;
+        $total = 22.00;
 
         return [
             'order_number' => 'ORD-'.self::$orderSequence,
@@ -58,39 +58,18 @@ class OrderFactory extends Factory
     {
         return $this->afterCreating(function (Order $order) {
             if ($order->items()->count() === 0) {
-                $count = fake()->numberBetween(1, 3);
-                $subtotal = 0.00;
-
-                for ($i = 0; $i < $count; $i++) {
-                    $product = Product::factory()->create();
-                    $qty = fake()->numberBetween(1, 4);
-                    $lineSubtotal = round($qty * (float) $product->price, 2);
-                    $lineTax = round($lineSubtotal * 0.10, 2);
-                    $lineTotal = round($lineSubtotal + $lineTax, 2);
-
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'product_id' => $product->id,
-                        'product_name' => $product->name,
-                        'sku' => $product->sku,
-                        'quantity' => $qty,
-                        'unit_price' => $product->price,
-                        'line_subtotal' => $lineSubtotal,
-                        'discount_amount' => 0.00,
-                        'tax_amount' => $lineTax,
-                        'line_total' => $lineTotal,
-                    ]);
-
-                    $subtotal += $lineSubtotal;
-                }
-
-                $taxAmount = round($subtotal * 0.10, 2);
-                $total = round($subtotal + $taxAmount, 2);
-
-                $order->updateQuietly([
-                    'subtotal' => $subtotal,
-                    'tax_amount' => $taxAmount,
-                    'total' => $total,
+                $product = Product::factory()->create(['price' => $order->subtotal]);
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'sku' => $product->sku,
+                    'quantity' => 1,
+                    'unit_price' => $order->subtotal,
+                    'line_subtotal' => $order->subtotal,
+                    'discount_amount' => $order->discount_amount ?: 0.00,
+                    'tax_amount' => $order->tax_amount ?: 0.00,
+                    'line_total' => $order->total,
                 ]);
             }
         });
