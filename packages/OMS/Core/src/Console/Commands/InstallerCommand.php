@@ -34,10 +34,10 @@ class InstallerCommand extends Command
         // 1. Ask for environment variables
         $appName = $this->ask('APP_NAME', 'OMS');
         $appUrl = $this->ask('APP_URL', 'http://localhost:8000');
-        
+
         $dbConnection = $this->choice(
-            'DB_CONNECTION', 
-            ['mysql', 'sqlite', 'pgsql', 'sqlsrv'], 
+            'DB_CONNECTION',
+            ['mysql', 'sqlite', 'pgsql', 'sqlsrv'],
             0 // default to mysql
         );
 
@@ -57,7 +57,7 @@ class InstallerCommand extends Command
 
         // 2. Create .env if it doesn't exist
         $envPath = base_path('.env');
-        if (!File::exists($envPath)) {
+        if (! File::exists($envPath)) {
             $this->info('Creating .env file from .env.example...');
             File::copy(base_path('.env.example'), $envPath);
         }
@@ -86,7 +86,7 @@ class InstallerCommand extends Command
         // 5. Handle SQLite Database creation
         if ($dbConnection === 'sqlite') {
             $sqlitePath = database_path('database.sqlite');
-            if (!File::exists($sqlitePath)) {
+            if (! File::exists($sqlitePath)) {
                 $this->info('Creating SQLite database file...');
                 File::put($sqlitePath, '');
             }
@@ -101,8 +101,9 @@ class InstallerCommand extends Command
             ]);
             $this->info(Artisan::output());
         } catch (\Exception $e) {
-            $this->error('Database migration failed: ' . $e->getMessage());
+            $this->error('Database migration failed: '.$e->getMessage());
             $this->error('Please check your database credentials and try running "php artisan migrate:fresh --seed" manually.');
+
             return self::FAILURE;
         }
 
@@ -117,19 +118,19 @@ class InstallerCommand extends Command
     protected function updateEnv(array $data): void
     {
         $path = base_path('.env');
-        if (!File::exists($path)) {
+        if (! File::exists($path)) {
             return;
         }
 
         $envContent = File::get($path);
 
         foreach ($data as $key => $value) {
-            $escapedValue = preg_match('/\s/', (string) $value) ? '"' . $value . '"' : $value;
-            
-            if (preg_match('/^' . $key . '=/m', $envContent)) {
-                $envContent = preg_replace('/^' . $key . '=.*$/m', $key . '=' . $escapedValue, $envContent);
+            $escapedValue = preg_match('/\s/', (string) $value) ? '"'.$value.'"' : $value;
+
+            if (preg_match('/^'.$key.'=/m', $envContent)) {
+                $envContent = preg_replace('/^'.$key.'=.*$/m', $key.'='.$escapedValue, $envContent);
             } else {
-                $envContent .= "\n" . $key . '=' . $escapedValue;
+                $envContent .= "\n".$key.'='.$escapedValue;
             }
         }
 

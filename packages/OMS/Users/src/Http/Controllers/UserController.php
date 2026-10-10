@@ -42,6 +42,10 @@ class UserController extends Controller
     {
         $this->authorizePermission('users.manage');
 
+        if ($request->has('email')) {
+            $request->merge(['email' => strtolower($request->input('email'))]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:120',
             'email' => 'required|email|max:190|unique:users,email',
@@ -120,6 +124,10 @@ class UserController extends Controller
                 'code' => 'NOT_FOUND',
                 'errors' => [],
             ], 404);
+        }
+
+        if ($request->has('email')) {
+            $request->merge(['email' => strtolower($request->input('email'))]);
         }
 
         $validated = $request->validate([

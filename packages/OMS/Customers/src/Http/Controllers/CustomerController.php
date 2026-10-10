@@ -66,6 +66,10 @@ class CustomerController extends Controller
     {
         $this->authorizePermission('customers.manage');
 
+        if ($request->has('email')) {
+            $request->merge(['email' => strtolower($request->input('email'))]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:150',
             'email' => 'required|email|max:190|unique:customers,email',
@@ -130,6 +134,10 @@ class CustomerController extends Controller
                 'code' => 'NOT_FOUND',
                 'errors' => [],
             ], 404);
+        }
+
+        if ($request->has('email')) {
+            $request->merge(['email' => strtolower($request->input('email'))]);
         }
 
         $validated = $request->validate([
