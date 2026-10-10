@@ -24,22 +24,11 @@ jobs:
       with:
         node-version: '20'
 
-    - name: Copy .env
-      run: php -r "file_exists('.env') || copy('.env.example', '.env'); copy('.env.e2e', '.env');"
-
     - name: Install PHP Dependencies
-      run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+      run: composer update -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
-    - name: Generate key
-      run: php artisan key:generate
-
-    - name: Create SQLite Database
-      run: |
-        mkdir -p database
-        touch database/database.sqlite
-
-    - name: Run Migrations and Seed
-      run: php artisan migrate:fresh --seed --force
+    - name: Run OMS Installer
+      run: printf "\n\nsqlite\n" | php artisan oms:install
 
     - name: Run Laravel Pint (Code Style)
       run: ./vendor/bin/pint --test
@@ -54,9 +43,6 @@ jobs:
 
     - name: Install Node Dependencies
       run: npm ci
-
-    - name: Build Frontend Assets
-      run: npm run build
 
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
