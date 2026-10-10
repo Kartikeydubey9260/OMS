@@ -30,35 +30,30 @@ git clone <repository-url>
 cd OMS
 ```
 
-### 2. Install PHP and Node dependencies
+### 2. Install Dependencies
+
+You only need to install PHP dependencies using Composer (frontend assets are pre-built):
 
 ```bash
 composer install
-npm install
 ```
 
-### 3. Environment Configuration
+### 3. Run the Interactive Installer
 
-Copy the `.env.example` file to `.env` and generate the application key:
+We have provided a streamlined, interactive command to configure your environment, database, and generate the application key automatically:
 
 ```bash
-cp .env.example .env
-php artisan key:generate
+php artisan oms:install
 ```
 
-*Note: By default, the application is configured to use SQLite for rapid setup. If using MySQL/PostgreSQL, update your `DB_*` variables in `.env` accordingly.*
-
-### 4. Database Setup (Migrations & Seeding)
-
-Run the database migrations and seed the database with initial users, roles, and dummy data:
-
-```bash
-# If using SQLite, create the database file first:
-touch database/database.sqlite
-
-# Run migrations and seed data
-php artisan migrate:fresh --seed
-```
+This command will:
+- Prompt for your App Name and URL.
+- Let you choose your preferred database connection (MySQL, SQLite, etc.) via an interactive radio menu.
+- Securely prompt for your database credentials (passwords will be hidden as `*****`).
+- Create and populate your `.env` file automatically.
+- Generate your Laravel application key.
+- Create `database/database.sqlite` if you select SQLite.
+- Run `php artisan migrate:fresh --seed` automatically to initialize the database with schema and default users.
 
 **Default Credentials (from Seeder):**
 - Admin: `admin@example.com` / `password`
