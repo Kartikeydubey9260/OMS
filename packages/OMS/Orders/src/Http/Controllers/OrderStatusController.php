@@ -42,7 +42,7 @@ class OrderStatusController extends Controller
         $targetStatus = $validated['status'];
 
         $orderData = DB::transaction(function () use ($id, $targetStatus, $validated, $user, $request) {
-            $order = Order::lockForUpdate()->find($id);
+            $order = Order::find($id);
             if (! $order) {
                 abort(response()->json([
                     'success' => false,
@@ -50,6 +50,20 @@ class OrderStatusController extends Controller
                     'code' => 'NOT_FOUND',
                     'errors' => [],
                 ], 404));
+            }
+
+            // Atomic version check against DB for concurrency
+            $affected = Order::where('id', $id)
+                ->where('version', $order->version)
+                ->update(['version' => $order->version + 1]);
+
+            if ($affected === 0) {
+                abort(response()->json([
+                    'success' => false,
+                    'message' => 'Order has been modified by another user.',
+                    'code' => 'CONFLICT',
+                    'errors' => [],
+                ], 409));
             }
 
             if ($request->has('version') && (int) $request->input('version') !== $order->version) {

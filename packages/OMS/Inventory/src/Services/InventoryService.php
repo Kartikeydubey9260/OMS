@@ -35,7 +35,7 @@ class InventoryService implements InventoryServiceContract
             }
 
             $order->update(['stock_reserved' => true]);
-        });
+        }, 5);
     }
 
     public function restoreStock(Order $order): void
@@ -57,7 +57,7 @@ class InventoryService implements InventoryServiceContract
             }
 
             $order->update(['stock_reserved' => false]);
-        });
+        }, 5);
     }
 
     public function adjustStock(Product $product, int $quantity, string $reason): Product
@@ -84,6 +84,6 @@ class InventoryService implements InventoryServiceContract
             );
 
             return $lockedProduct;
-        });
+        }, 5);
     }
 }
