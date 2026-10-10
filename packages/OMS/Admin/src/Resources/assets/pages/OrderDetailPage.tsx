@@ -26,10 +26,10 @@ interface OrderDetail {
         id: number;
         product_id: number;
         product_name?: string;
-        product_sku?: string;
+        sku?: string;
         quantity: number;
         unit_price: number | string;
-        subtotal: number | string;
+        line_subtotal: number | string;
         product?: { name: string; sku: string };
     }[];
     status_history: {
@@ -40,6 +40,7 @@ interface OrderDetail {
         created_at: string;
         user?: { name: string };
         changed_by?: { name: string };
+        changer?: { name: string };
     }[];
     activities?: {
         id: number;
@@ -51,6 +52,12 @@ interface OrderDetail {
     order_notes?: {
         id: number;
         note: string;
+        created_at: string;
+        user?: { name: string };
+    }[];
+    notes_list?: {
+        id: number;
+        body: string;
         created_at: string;
         user?: { name: string };
     }[];
@@ -163,7 +170,7 @@ export const OrderDetailPage: React.FC = () => {
         return (
             <div data-testid="not-found-page" className="min-h-[80vh] flex flex-col items-center justify-center p-4">
                 <h1 data-testid="page-title" className="text-3xl font-extrabold text-gray-900 mb-2">Order Not Found</h1>
-                <p data-testid="order-detail-error" className="text-gray-600 mb-6">Unable to find requested order.</p>
+                <p  className="text-gray-600 mb-6">Unable to find requested order.</p>
                 <Link to="/orders" className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-semibold min-h-[38px] flex items-center">
                     Return to Orders
                 </Link>
@@ -446,7 +453,7 @@ export const OrderDetailPage: React.FC = () => {
                                         {item.product?.name || item.product_name || `Product #${item.product_id}`}
                                     </td>
                                     <td className="px-6 py-4 font-mono text-xs text-gray-500">
-                                        {item.product?.sku || item.product_sku || "N/A"}
+                                        {item.product?.sku || item.sku || "N/A"}
                                     </td>
                                     <td className="px-6 py-4 text-right text-gray-700">
                                         {formatMoney(item.unit_price)}
@@ -455,7 +462,7 @@ export const OrderDetailPage: React.FC = () => {
                                         {item.quantity}
                                     </td>
                                     <td className="px-6 py-4 text-right font-bold text-gray-900">
-                                        {formatMoney(item.subtotal)}
+                                        {formatMoney(item.line_subtotal)}
                                     </td>
                                 </tr>
                             ))}
@@ -487,7 +494,7 @@ export const OrderDetailPage: React.FC = () => {
                                             <div className="text-xs text-gray-600 italic mt-0.5">{hist.remarks}</div>
                                         )}
                                         <div className="text-[10px] text-gray-400 mt-1">
-                                            by {hist.user?.name || hist.changed_by?.name || "System"} • {new Date(hist.created_at).toLocaleString()}
+                                            by {hist.user?.name || hist.changed_by?.name || hist.changer?.name || "System"} • {new Date(hist.created_at).toLocaleString()}
                                         </div>
                                     </div>
                                 </div>
@@ -502,14 +509,14 @@ export const OrderDetailPage: React.FC = () => {
                     <div data-testid="order-activity" className="space-y-3">
                         {/* Combine notes and activities */}
                         {(() => {
-                            const notes = (order.order_notes || []).map((n) => ({
+                            const notes = (order.notes_list || order.order_notes || []).map((n: { id: number; body?: string; note?: string; created_at: string; user?: { name: string; } }) => ({
                                 id: `note-${n.id}`,
-                                text: n.note,
+                                text: n.body || n.note,
                                 author: n.user?.name || "Staff",
                                 date: n.created_at,
                                 isNote: true,
                             }));
-                            const acts = (order.activities || []).map((a) => ({
+                            const acts = (order.activities || []).map((a: { id: number; description?: string; action?: string; causer?: { name: string; }; created_at: string }) => ({
                                 id: `act-${a.id}`,
                                 text: a.description || a.action,
                                 author: a.causer?.name || "User",

@@ -66,29 +66,25 @@ export const OrderWizardPage: React.FC = () => {
 
     // Search customers
     useEffect(() => {
-        if (!customerSearch.trim()) {
-            setCustomerResults([]);
-            return;
-        }
+        setCustomerResults([]);
+        if (!customerSearch.trim()) return;
         const timer = setTimeout(() => {
             api.get<CustomerOption[]>(`/customers/lookup?search=${encodeURIComponent(customerSearch.trim())}`)
                 .then((res) => setCustomerResults(res.data || []))
                 .catch(() => {});
-        }, 200);
+        }, 50);
         return () => clearTimeout(timer);
     }, [customerSearch]);
 
     // Search products
     useEffect(() => {
-        if (!productSearch.trim()) {
-            setProductResults([]);
-            return;
-        }
+        setProductResults([]);
+        if (!productSearch.trim()) return;
         const timer = setTimeout(() => {
             api.get<ProductOption[]>(`/products/lookup?search=${encodeURIComponent(productSearch.trim())}`)
                 .then((res) => setProductResults(res.data || []))
                 .catch(() => {});
-        }, 200);
+        }, 50);
         return () => clearTimeout(timer);
     }, [productSearch]);
 

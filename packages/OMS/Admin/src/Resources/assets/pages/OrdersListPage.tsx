@@ -77,7 +77,8 @@ export const OrdersListPage: React.FC = () => {
         setError(null);
         try {
             const params = new URLSearchParams();
-            if (searchInput.trim()) params.append("search", searchInput.trim());
+            const urlSearch = searchParams.get("search") || "";
+            if (urlSearch.trim()) params.append("search", urlSearch.trim());
             if (statusFilter) params.append("status", statusFilter);
             if (priorityFilter) params.append("priority", priorityFilter);
             if (assigneeFilter) params.append("assigned_to", assigneeFilter);
@@ -101,7 +102,7 @@ export const OrdersListPage: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [searchInput, statusFilter, priorityFilter, assigneeFilter, dateFrom, dateTo, sort, direction, page, perPage]);
+    }, [searchParams, statusFilter, priorityFilter, assigneeFilter, dateFrom, dateTo, sort, direction, page, perPage]);
 
     // Initial fetch of staff
     useEffect(() => {
@@ -299,7 +300,7 @@ export const OrdersListPage: React.FC = () => {
                     className="p-4 rounded-md bg-red-50 border border-red-200 text-red-700 flex items-center justify-between"
                 >
                     <div>
-                        <span className="font-bold">Error:</span> {error || "Unable to load orders."}
+                        <span className="font-bold">Error:</span> {error === "Unable to load orders." ? error : `Unable to load orders. (${error})`}
                     </div>
                     <button
                         type="button"

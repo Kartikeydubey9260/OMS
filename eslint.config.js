@@ -12,6 +12,8 @@ export default tseslint.config(
             "bootstrap/cache/**",
             "qa-kit/**",
             "resources/js/**",
+            "playwright-report/**",
+            "test-results/**",
         ],
     },
     js.configs.recommended,

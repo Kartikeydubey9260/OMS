@@ -117,10 +117,19 @@ class OrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1|max:100000',
-            'discount_type' => 'nullable|string|in:fixed,percent',
+            'discount_type' => 'nullable|string|in:fixed,percent,percentage,none',
             'discount_value' => 'nullable|numeric|min:0',
             'tax_rate' => 'nullable|numeric|min:0',
         ]);
+
+        $dType = $validated['discount_type'] ?? null;
+        if ($dType === 'percentage') {
+            $dType = 'percent';
+        }
+        if ($dType === 'none') {
+            $dType = null;
+        }
+        $validated['discount_type'] = $dType;
 
         if (($validated['discount_type'] ?? null) === 'percent' && ((float) ($validated['discount_value'] ?? 0)) > 100) {
             throw ValidationException::withMessages(['discount_value' => 'Percentage discount cannot exceed 100%.']);
@@ -168,7 +177,7 @@ class OrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
-            'discount_type' => 'nullable|string|in:fixed,percent',
+            'discount_type' => 'nullable|string|in:fixed,percent,percentage,none',
             'discount_value' => 'nullable|numeric|min:0',
             'tax_rate' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string|max:5000',
@@ -181,6 +190,15 @@ class OrderController extends Controller
             'items.*.quantity.min' => 'Quantity must be greater than 0.',
             'items.*.quantity.integer' => 'Quantity must be an integer.',
         ]);
+
+        $dType = $validated['discount_type'] ?? null;
+        if ($dType === 'percentage') {
+            $dType = 'percent';
+        }
+        if ($dType === 'none') {
+            $dType = null;
+        }
+        $validated['discount_type'] = $dType;
 
         $customer = Customer::find($validated['customer_id']);
         if ($customer && ! $customer->is_active) {
@@ -617,7 +635,7 @@ class OrderController extends Controller
                     'to_status' => $h->to_status,
                     'remarks' => $h->remarks,
                     'changed_by' => $h->changed_by,
-                    'changer' => $h->changedBy ? ['id' => $h->changedBy->id, 'name' => $h->changedBy->name] : null,
+                    'user' => $h->changedBy ? ['id' => $h->changedBy->id, 'name' => $h->changedBy->name] : null,
                     'created_at' => $h->created_at?->toIso8601String(),
                 ];
             })->all(),

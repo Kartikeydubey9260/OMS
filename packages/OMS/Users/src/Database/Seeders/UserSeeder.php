@@ -19,22 +19,22 @@ class UserSeeder extends Seeder
                 'role' => 'admin',
             ],
             [
-                'name' => 'Operations Manager',
+                'name' => 'Manager User',
                 'email' => 'manager@oms.test',
                 'role' => 'manager',
             ],
             [
-                'name' => 'Inventory Manager',
+                'name' => 'Second Manager',
                 'email' => 'manager2@oms.test',
                 'role' => 'manager',
             ],
             [
-                'name' => 'Fulfillment Staff',
+                'name' => 'Staff User',
                 'email' => 'staff@oms.test',
                 'role' => 'staff',
             ],
             [
-                'name' => 'Warehouse Staff',
+                'name' => 'Second Staff',
                 'email' => 'staff2@oms.test',
                 'role' => 'staff',
             ],
