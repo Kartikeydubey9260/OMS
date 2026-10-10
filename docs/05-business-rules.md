@@ -29,17 +29,18 @@ draft ─► pending ─► confirmed ─► processing ─► ready ─► comp
 
 Transition map (anything else → 422 `INVALID_STATUS_TRANSITION`):
 
-| From | Allowed to |
-|---|---|
-| draft | pending, cancelled |
-| pending | confirmed, cancelled, draft *(return to draft for edits)* |
-| confirmed | processing, cancelled |
-| processing | ready, cancelled *(Admin/Manager only)* |
-| ready | completed, cancelled *(Admin only)* |
-| completed | — terminal |
-| cancelled | — terminal (no reopening; duplicate order instead) |
+| From       | Allowed to                                                |
+| ---------- | --------------------------------------------------------- |
+| draft      | pending, cancelled                                        |
+| pending    | confirmed, cancelled, draft _(return to draft for edits)_ |
+| confirmed  | processing, cancelled                                     |
+| processing | ready, cancelled _(Admin/Manager only)_                   |
+| ready      | completed, cancelled _(Admin only)_                       |
+| completed  | — terminal                                                |
+| cancelled  | — terminal (no reopening; duplicate order instead)        |
 
 Rules:
+
 - Cancel requires `remarks` (reason) for confirmed/processing/ready.
 - Terminal orders: no item edits, no status changes, notes still allowed.
 - Staff may only move **assigned** orders along: `confirmed→processing`, `processing→ready`, `ready→completed`. Staff cannot cancel or confirm. (Configurable map in `config/oms.php`; documented.)
@@ -83,13 +84,13 @@ Each successful transition inserts `order_status_histories` (from, to, user, rem
 
 ## 8. Notifications
 
-| Event | Recipients | Message |
-|---|---|---|
-| OrderAssigned | new assignee | "New order #ORD-… assigned to you." |
-| OrderStatusChanged → confirmed | creator + assignee | "Order #… has been confirmed." |
-| → cancelled | creator + assignee + managers | "Order #… was cancelled." |
-| Order overdue/attention (optional scheduled job) | assignee | "Order #… requires your attention." |
-| LowStockDetected | admins | "Product X is low on stock." |
+| Event                                            | Recipients                    | Message                             |
+| ------------------------------------------------ | ----------------------------- | ----------------------------------- |
+| OrderAssigned                                    | new assignee                  | "New order #ORD-… assigned to you." |
+| OrderStatusChanged → confirmed                   | creator + assignee            | "Order #… has been confirmed."      |
+| → cancelled                                      | creator + assignee + managers | "Order #… was cancelled."           |
+| Order overdue/attention (optional scheduled job) | assignee                      | "Order #… requires your attention." |
+| LowStockDetected                                 | admins                        | "Product X is low on stock."        |
 
 Never notify the actor about their own action. Use queued listeners; store as database notifications with `data: {order_id, order_number, message, type}`.
 

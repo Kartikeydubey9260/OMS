@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use OMS\Core\Models\AuditLog;
 use OMS\Customers\Models\Customer;
 use OMS\Orders\Models\Order;
 use OMS\Products\Models\Product;
+use Spatie\Permission\Models\Role;
 
 use function Pest\Laravel\getJson;
 use function Pest\Laravel\postJson;
@@ -130,7 +132,7 @@ it('lets staff view customers and products but not change them', function () {
 
 it('prevents an admin from removing core permissions from the admin role (lock-out protection)', function () {
     $admin = actingAsRole('admin');
-    $role = \Spatie\Permission\Models\Role::findByName('admin');
+    $role = Role::findByName('admin');
 
     $this->putJson("/api/roles/{$role->id}/permissions", ['permissions' => ['orders.view_all']])->assertUnprocessable();
 
@@ -139,18 +141,18 @@ it('prevents an admin from removing core permissions from the admin role (lock-o
 
 it('applies permission changes immediately (cache cleared) and audits them', function () {
     actingAsRole('admin');
-    $staffRole = \Spatie\Permission\Models\Role::findByName('staff');
+    $staffRole = Role::findByName('staff');
     $perms = $staffRole->permissions->pluck('name')->push('products.manage')->all();
 
     $this->putJson("/api/roles/{$staffRole->id}/permissions", ['permissions' => $perms])->assertOk();
 
     expect($staffRole->fresh()->hasPermissionTo('products.manage'))->toBeTrue()
-        ->and(\OMS\Core\Models\AuditLog::where('action', 'role.permissions_updated')->exists())->toBeTrue();
+        ->and(AuditLog::where('action', 'role.permissions_updated')->exists())->toBeTrue();
 });
 
 it('rejects permission names that do not exist', function () {
     actingAsRole('admin');
-    $role = \Spatie\Permission\Models\Role::findByName('staff');
+    $role = Role::findByName('staff');
 
     $this->putJson("/api/roles/{$role->id}/permissions", ['permissions' => ['does.not.exist']])->assertUnprocessable();
 });

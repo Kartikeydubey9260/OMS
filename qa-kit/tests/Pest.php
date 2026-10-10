@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 /* OMS Pest bootstrap + shared helpers. See docs/13-test-contract.md for all shared test assumptions. */
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
+use Laravel\Sanctum\Sanctum;
 use OMS\Customers\Models\Customer;
 use OMS\Products\Models\Product;
-use OMS\Users\Models\User;
 use OMS\Users\Database\Seeders\RolePermissionSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
+use OMS\Users\Models\User;
 use Spatie\Permission\PermissionRegistrar;
+use Tests\TestCase;
 
 use function Pest\Laravel\postJson;
 
-uses(Tests\TestCase::class, RefreshDatabase::class)->in('Feature', '../qa-kit/tests/Feature');
-uses(Tests\TestCase::class)->in('Unit', '../qa-kit/tests/Unit');
+uses(TestCase::class, RefreshDatabase::class)->in('Feature', '../qa-kit/tests/Feature');
+uses(TestCase::class)->in('Unit', '../qa-kit/tests/Unit');
 
 const ALL_STATUSES = ['draft', 'pending', 'confirmed', 'processing', 'ready', 'completed', 'cancelled'];
 
@@ -85,7 +87,7 @@ function createOrderViaApi(array $override = []): int
     return (int) $res->json('data.id');
 }
 
-function setStatusViaApi(int $orderId, string $status, ?string $remarks = null): \Illuminate\Testing\TestResponse
+function setStatusViaApi(int $orderId, string $status, ?string $remarks = null): TestResponse
 {
     return postJson("/api/orders/{$orderId}/status", array_filter(['status' => $status, 'remarks' => $remarks]));
 }

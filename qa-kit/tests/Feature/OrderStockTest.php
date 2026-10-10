@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use OMS\Core\Models\AuditLog;
 use OMS\Customers\Models\Customer;
 use OMS\Orders\Models\Order;
 use OMS\Products\Models\Product;
@@ -124,5 +125,5 @@ it('allows manual stock adjustments but never below zero, and audits them', func
     patchJson("/api/products/{$p->id}/stock", ['delta' => 5])->assertUnprocessable(); // reason required
 
     expect($p->fresh()->stock_quantity)->toBe(7)
-        ->and(\OMS\Core\Models\AuditLog::where('action', 'product.stock_adjusted')->where('auditable_id', $p->id)->count())->toBe(1);
+        ->and(AuditLog::where('action', 'product.stock_adjusted')->where('auditable_id', $p->id)->count())->toBe(1);
 });

@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use OMS\Products\Models\Product;
 use Illuminate\Testing\TestResponse;
+use OMS\Products\Models\Product;
 
 use function Pest\Laravel\getJson;
 use function Pest\Laravel\postJson;

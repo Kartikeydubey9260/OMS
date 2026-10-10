@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use OMS\Customers\Models\Customer;
+use OMS\Orders\Models\Order;
 use OMS\Products\Models\Product;
 
 use function Pest\Laravel\postJson;
@@ -44,7 +46,7 @@ it('rejects invalid order payloads with field-keyed messages', function ($payloa
 it('rejects deactivated customers', function () {
     actingAsRole('admin');
     $payload = orderPayload();
-    \OMS\Customers\Models\Customer::find($payload['customer_id'])->update(['is_active' => false]);
+    Customer::find($payload['customer_id'])->update(['is_active' => false]);
 
     postJson('/api/orders', $payload)->assertUnprocessable()->assertJsonValidationErrors('customer_id');
 });
@@ -62,7 +64,7 @@ it('does not mass-assign protected attributes', function () {
     $id = postJson('/api/orders', orderPayload(['created_by' => 99999, 'stock_reserved' => true, 'version' => 50, 'order_number' => 'HACK-1', 'status' => 'pending']))
         ->assertCreated()->json('data.id');
 
-    $order = \OMS\Orders\Models\Order::find($id);
+    $order = Order::find($id);
     expect($order->created_by)->toBe($user->id)
         ->and((bool) $order->stock_reserved)->toBeFalse()
         ->and($order->version)->toBe(1)

@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\DB;
 use OMS\Customers\Models\Customer;
 use OMS\Orders\Models\Order;
 use OMS\Orders\Models\OrderItem;
 use OMS\Products\Models\Product;
-use Illuminate\Support\Facades\DB;
 
 use function Pest\Laravel\getJson;
 
 function numbers(string $qs = ''): array
 {
-    return collect(getJson('/api/orders' . $qs)->assertOk()->json('data'))->pluck('order_number')->all();
+    return collect(getJson('/api/orders'.$qs)->assertOk()->json('data'))->pluck('order_number')->all();
 }
 
 beforeEach(function () {
@@ -30,11 +30,11 @@ beforeEach(function () {
 });
 
 it('searches by order number, customer name, customer email, product and assignee', function (string $term) {
-    expect(numbers('?search=' . urlencode($term)))->toContain($this->order->order_number);
+    expect(numbers('?search='.urlencode($term)))->toContain($this->order->order_number);
 })->with(['by order number' => fn () => 'ORD-', 'by customer name' => 'Quokka', 'by customer email' => 'buyer@quokka', 'by product name' => 'Zebra', 'by product sku' => 'ZEB-001', 'by assignee' => 'Zelda']);
 
 it('finds exactly the order when searching its full order number', function () {
-    expect(numbers('?search=' . $this->order->order_number))->toBe([$this->order->order_number]);
+    expect(numbers('?search='.$this->order->order_number))->toBe([$this->order->order_number]);
 });
 
 it('returns nothing for a non-matching search', function () {
@@ -42,12 +42,12 @@ it('returns nothing for a non-matching search', function () {
 });
 
 it('treats LIKE wildcards in search literally', function () {
-    expect(numbers('?search=' . urlencode('%')))->toBe([]);
+    expect(numbers('?search='.urlencode('%')))->toBe([]);
 });
 
 it('filters by status, priority, customer, assignee and date range', function () {
-    expect(numbers('?status=confirmed&customer_id=' . $this->customer->id))->toBe([$this->order->order_number]);
-    expect(numbers('?priority=urgent&assigned_to=' . $this->assignee->id))->toBe([$this->order->order_number]);
+    expect(numbers('?status=confirmed&customer_id='.$this->customer->id))->toBe([$this->order->order_number]);
+    expect(numbers('?priority=urgent&assigned_to='.$this->assignee->id))->toBe([$this->order->order_number]);
     expect(numbers('?date_from=2026-03-01&date_to=2026-03-31'))->toBe([$this->order->order_number]);
     expect(numbers('?date_from=2026-03-16'))->not->toContain($this->order->order_number);
     expect(numbers('?date_to=2026-03-15'))->toContain($this->order->order_number);
@@ -72,7 +72,7 @@ it('sorts by total descending correctly', function () {
 });
 
 it('rejects unknown sort columns instead of passing them to SQL', function () {
-    getJson('/api/orders?sort=' . urlencode('id; DROP TABLE orders'))->assertUnprocessable()->assertJsonPath('code', 'VALIDATION_ERROR');
+    getJson('/api/orders?sort='.urlencode('id; DROP TABLE orders'))->assertUnprocessable()->assertJsonPath('code', 'VALIDATION_ERROR');
     getJson('/api/orders?sort=password&direction=asc')->assertUnprocessable();
     getJson('/api/orders?direction=sideways')->assertUnprocessable();
     expect(Order::count())->toBeGreaterThan(0);

@@ -1,9 +1,11 @@
 # OMS — AI development rules
 
 ## Goal and scope
+
 Build the Laravel + React Order Management System described in `docs/01-requirements.md`. This is a separate project variant from `vueOMS/`; never merge the variants or work in the parent pack directory.
 
 ## Authoritative architecture
+
 - Backend packages live under `packages/OMS/<Package>/`; namespace each package `OMS\<Package>\` and map it from the single root `composer.json` to `packages/OMS/<Package>/src`.
 - Mirror the verified Bagisto `packages/Webkul/*` package conventions as REQUIRED: `src/Providers`, `Config`, `Contracts`, `Models`, `Proxies`, `Repositories`, `Http/{Controllers,Requests,Resources}`, `Routes`, `Database/{Migrations,Seeders,Factories}`, `Events`, `Listeners`, `Jobs`, `Resources/{lang,views,assets}`, and package-root `tests/`. Create the directories even if a first iteration has few files. `src/Providers/<Package>ServiceProvider.php` is required. Add `src/Providers/EventServiceProvider.php` where event/listener mappings are owned. `src/Proxies` and `src/Repositories` are required conventions; do not omit them silently. Record any deviation in `docs/12-architecture-decisions.md`.
 - Root Laravel directories remain for framework bootstrap, global config, shared infrastructure and application integration. Domain implementation belongs to packages.
@@ -12,7 +14,9 @@ Build the Laravel + React Order Management System described in `docs/01-requirem
 - Frontend is React + TypeScript in `packages/OMS/Admin/src/Resources/assets/`; Vite entry is `app.tsx`. Blade is only an optional SPA mount shell, never product UI. Do not use `packages/OMS/Admin/src/Resources/assets/` for frontend source.
 
 ## Autonomy / pre-approved decisions
+
 The following are already decided and must not trigger clarification questions:
+
 - PHP 8.2+, Laravel 12.x, MySQL 8.0+, Node.js 20.19+, Sanctum 4.x, Spatie Laravel Permission 6.x.
 - Backend packages and ownership: Core, Users, Customers, Products, Inventory, Orders, Admin, API; exact responsibilities, table ownership and acyclic dependency graph are in `docs/02-architecture.md`.
 - Package layout and required conventions are listed above; frontend entry path is `packages/OMS/Admin/src/Resources/assets/app.tsx`.
@@ -20,9 +24,10 @@ The following are already decided and must not trigger clarification questions:
 - QA stack: Pest `^3.8`, Pest Laravel plugin `^3.2`, PHPUnit `^11.0`, Pint `^1.24`, Larastan `^3.0`, Vitest `^2.1`, React Testing Library `^16`, Playwright `^1.56`, axe-core Playwright `^4.10`, ESLint `^9`, Prettier `^3`.
 - Seeded local-only QA accounts are `admin@oms.test`, `manager@oms.test`, and `staff@oms.test`, password `password`; roles are `admin`, `manager`, and `staff`. Use only in an isolated test database, never in production.
 - Follow `docs/13-test-contract.md` for factory names/states, helpers, seeder FQCNs and test model FQCNs.
-Only ask before destructive/irreversible actions or a proposed change to this pre-approved list. Otherwise proceed and document implementation choices.
+  Only ask before destructive/irreversible actions or a proposed change to this pre-approved list. Otherwise proceed and document implementation choices.
 
 ## Package boundaries and engineering rules
+
 - Keep package dependencies explicit, acyclic and documented. The graph in `docs/02-architecture.md` is pre-approved.
 - Keep controllers thin; use Form Requests, API Resources, policies, transactions and application/domain services.
 - Do not trust frontend totals; recalculate pricing and stock-sensitive values on the backend. Use decimal-safe money handling.

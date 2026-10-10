@@ -86,7 +86,7 @@ it('deactivates instead of destroying customers that have orders', function () {
 
     expect(Order::find($order->id))->not->toBeNull();
     expect(Customer::withTrashed()->find($c->id))->not->toBeNull();
-    getJson('/api/customers/lookup?q=' . urlencode($c->name))->assertOk()->assertJsonMissing(['id' => $c->id]);
+    getJson('/api/customers/lookup?q='.urlencode($c->name))->assertOk()->assertJsonMissing(['id' => $c->id]);
 });
 
 /* ----------------------------------------------------------------- products */

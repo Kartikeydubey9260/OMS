@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use OMS\Users\Models\User;
 use Illuminate\Support\Facades\Hash;
+use OMS\Users\Models\User;
 
 use function Pest\Laravel\getJson;
 use function Pest\Laravel\postJson;

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use Laravel\Sanctum\Sanctum;
 use OMS\Core\Models\AuditLog;
 use OMS\Orders\Models\Order;
-use Laravel\Sanctum\Sanctum;
 
 use function Pest\Laravel\getJson;
 use function Pest\Laravel\postJson;

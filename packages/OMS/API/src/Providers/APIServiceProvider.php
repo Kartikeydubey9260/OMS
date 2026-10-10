@@ -1,0 +1,20 @@
+<?php
+
+declare(strict_types=1);
+
+namespace OMS\API\Providers;
+
+use Illuminate\Support\ServiceProvider;
+
+class APIServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        //
+    }
+
+    public function boot(): void
+    {
+        //
+    }
+}

@@ -3,6 +3,7 @@
 Tick every box before submission. Ref = requirement ID in `01-requirements.md`.
 
 ## Backend
+
 - [ ] `migrate:fresh --seed` works from scratch; app usable immediately (R-NFR-5)
 - [ ] Login/logout/me; protected APIs return 401 without token (R-AUTH-1)
 - [ ] Roles Admin/Manager/Staff seeded with permissions; Admin can edit permissions (R-ROLE-*)
@@ -27,6 +28,7 @@ Tick every box before submission. Ref = requirement ID in `01-requirements.md`.
 - [ ] Rate limiting on login/API; `$fillable` on all models; no secrets committed
 
 ## Frontend
+
 - [ ] React + TypeScript frontend in the OMS monorepo, preferably package-owned assets; Blade is mount shell only if needed. Vite build/typecheck pass.
 - [ ] Protected + permission routes; 401 → login
 - [ ] Order list: search, filters, sort, pagination, URL-synced, debounced
@@ -38,6 +40,7 @@ Tick every box before submission. Ref = requirement ID in `01-requirements.md`.
 - [ ] Server state in TanStack Query, client state in Zustand; explained in README
 
 ## Quality & delivery
+
 - [ ] Backend tests: auth, order create/update, status transition, invalid transition, validation, authorization, customer create, product create (R-NFR-4)
 - [ ] Frontend tests: reasonable set passing
 - [ ] Pint / ESLint / Prettier clean

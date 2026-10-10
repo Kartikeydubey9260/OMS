@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\Cache;
+use Laravel\Sanctum\Sanctum;
 use OMS\Core\Models\AuditLog;
 use OMS\Customers\Models\Customer;
 use OMS\Orders\Models\Order;
 use OMS\Products\Models\Product;
-use Illuminate\Support\Facades\Cache;
-use Laravel\Sanctum\Sanctum;
 
 use function Pest\Laravel\getJson;
 use function Pest\Laravel\postJson;

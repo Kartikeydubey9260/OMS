@@ -3,10 +3,11 @@
 declare(strict_types=1);
 
 use OMS\Core\Models\AuditLog;
+use OMS\Core\Services\AuditLogger;
 use OMS\Orders\Models\Order;
 use OMS\Orders\Models\OrderItem;
 use OMS\Orders\Models\OrderStatusHistory;
-use OMS\Core\Services\AuditLogger;
+use OMS\Products\Models\Product;
 
 use function Pest\Laravel\assertDatabaseCount;
 use function Pest\Laravel\getJson;
@@ -44,7 +45,7 @@ it('snapshots product name, sku and unit price on each item', function () {
     $payload = orderPayload();
     $id = postJson('/api/orders', $payload)->json('data.id');
 
-    $product = \OMS\Products\Models\Product::find($payload['items'][0]['product_id']);
+    $product = Product::find($payload['items'][0]['product_id']);
     $product->update(['price' => 999, 'name' => 'Renamed']);
 
     $item = OrderItem::where('order_id', $id)->where('product_id', $product->id)->first();
@@ -84,7 +85,7 @@ it('does not touch stock when an order is created', function () {
     $payload = orderPayload();
     postJson('/api/orders', $payload)->assertCreated();
 
-    expect(\OMS\Products\Models\Product::find($payload['items'][0]['product_id'])->stock_quantity)->toBe(100);
+    expect(Product::find($payload['items'][0]['product_id'])->stock_quantity)->toBe(100);
 });
 
 it('rolls back everything when a later step fails (no orphan order, items or history)', function () {
