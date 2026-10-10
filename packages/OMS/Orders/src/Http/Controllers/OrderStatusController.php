@@ -33,92 +33,93 @@ class OrderStatusController extends Controller
             abort(401);
         }
 
-        $order = Order::find($id);
-        if (! $order) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Order not found.',
-                'code' => 'NOT_FOUND',
-                'errors' => [],
-            ], 404);
-        }
-
-        if ($request->has('version') && (int) $request->input('version') !== $order->version) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Order has been modified by another user.',
-                'code' => 'CONFLICT',
-                'errors' => [],
-            ], 409);
-        }
-
         $validated = $request->validate([
             'status' => 'required|string|in:draft,pending,confirmed,processing,ready,completed,cancelled',
             'remarks' => 'nullable|string|max:500',
             'version' => 'nullable|integer',
         ]);
 
-        $fromStatus = $order->status->value;
         $targetStatus = $validated['status'];
 
-        // Staff-specific permission check
-        if ($user->hasRole('staff') && ! $user->hasRole('admin') && ! $user->hasRole('manager')) {
-            if ($order->assigned_to !== $user->id) {
+        $orderData = DB::transaction(function () use ($id, $targetStatus, $validated, $user, $request) {
+            $order = Order::lockForUpdate()->find($id);
+            if (! $order) {
                 abort(response()->json([
                     'success' => false,
-                    'message' => 'This action is unauthorized.',
-                    'code' => 'FORBIDDEN',
+                    'message' => 'Order not found.',
+                    'code' => 'NOT_FOUND',
                     'errors' => [],
-                ], 403));
+                ], 404));
             }
 
-            // Staff may only transition confirmed -> processing or processing -> ready
-            $allowedStaff = [
-                'confirmed' => ['processing'],
-                'processing' => ['ready'],
+            if ($request->has('version') && (int) $request->input('version') !== $order->version) {
+                abort(response()->json([
+                    'success' => false,
+                    'message' => 'Order has been modified by another user.',
+                    'code' => 'CONFLICT',
+                    'errors' => [],
+                ], 409));
+            }
+
+            $fromStatus = $order->status->value;
+
+            // Staff-specific permission check
+            if ($user->hasRole('staff') && ! $user->hasRole('admin') && ! $user->hasRole('manager')) {
+                if ($order->assigned_to !== $user->id) {
+                    abort(response()->json([
+                        'success' => false,
+                        'message' => 'This action is unauthorized.',
+                        'code' => 'FORBIDDEN',
+                        'errors' => [],
+                    ], 403));
+                }
+
+                // Staff may only transition confirmed -> processing or processing -> ready
+                $allowedStaff = [
+                    'confirmed' => ['processing'],
+                    'processing' => ['ready'],
+                ];
+
+                if (! isset($allowedStaff[$fromStatus]) || ! in_array($targetStatus, $allowedStaff[$fromStatus], true)) {
+                    abort(response()->json([
+                        'success' => false,
+                        'message' => 'This action is unauthorized.',
+                        'code' => 'FORBIDDEN',
+                        'errors' => [],
+                    ], 403));
+                }
+            }
+
+            // State machine transition validation
+            $transitionMap = [
+                'draft' => ['pending', 'cancelled'],
+                'pending' => ['confirmed', 'cancelled', 'draft'],
+                'confirmed' => ['processing', 'cancelled'],
+                'processing' => ['ready', 'cancelled'],
+                'ready' => ['completed', 'cancelled'],
+                'completed' => [],
+                'cancelled' => [],
             ];
 
-            if (! isset($allowedStaff[$fromStatus]) || ! in_array($targetStatus, $allowedStaff[$fromStatus], true)) {
-                abort(response()->json([
-                    'success' => false,
-                    'message' => 'This action is unauthorized.',
-                    'code' => 'FORBIDDEN',
-                    'errors' => [],
-                ], 403));
+            $validTargets = $transitionMap[$fromStatus];
+            if (! in_array($targetStatus, $validTargets, true)) {
+                throw new InvalidStatusTransitionException("Cannot transition order from {$fromStatus} to {$targetStatus}.");
             }
-        }
 
-        // State machine transition validation
-        $transitionMap = [
-            'draft' => ['pending', 'cancelled'],
-            'pending' => ['confirmed', 'cancelled', 'draft'],
-            'confirmed' => ['processing', 'cancelled'],
-            'processing' => ['ready', 'cancelled'],
-            'ready' => ['completed', 'cancelled'],
-            'completed' => [],
-            'cancelled' => [],
-        ];
-
-        $validTargets = $transitionMap[$fromStatus];
-        if (! in_array($targetStatus, $validTargets, true)) {
-            throw new InvalidStatusTransitionException("Cannot transition order from {$fromStatus} to {$targetStatus}.");
-        }
-
-        // Validation: cannot leave draft without items
-        if ($fromStatus === 'draft' && $targetStatus === 'pending') {
-            if ($order->items()->count() === 0) {
-                throw ValidationException::withMessages(['status' => 'Order must contain at least one product before leaving draft.']);
+            // Validation: cannot leave draft without items
+            if ($fromStatus === 'draft' && $targetStatus === 'pending') {
+                if ($order->items()->count() === 0) {
+                    throw ValidationException::withMessages(['status' => 'Order must contain at least one product before leaving draft.']);
+                }
             }
-        }
 
-        // Validation: cancellation after confirmation requires remarks
-        if (in_array($fromStatus, ['confirmed', 'processing', 'ready'], true) && $targetStatus === 'cancelled') {
-            if (empty($validated['remarks'])) {
-                throw ValidationException::withMessages(['remarks' => 'Remarks are required when cancelling a confirmed order.']);
+            // Validation: cancellation after confirmation requires remarks
+            if (in_array($fromStatus, ['confirmed', 'processing', 'ready'], true) && $targetStatus === 'cancelled') {
+                if (empty($validated['remarks'])) {
+                    throw ValidationException::withMessages(['remarks' => 'Remarks are required when cancelling a confirmed order.']);
+                }
             }
-        }
 
-        DB::transaction(function () use ($order, $fromStatus, $targetStatus, $validated, $user) {
             if ($targetStatus === 'confirmed') {
                 $this->inventoryService->reserveStock($order);
                 $order->confirmed_at = now();
@@ -184,12 +185,14 @@ class OrderStatusController extends Controller
                 oldValues: ['status' => $fromStatus],
                 newValues: ['status' => $targetStatus]
             );
+
+            return $order->fresh();
         });
 
         return response()->json([
             'success' => true,
             'message' => 'Order status updated successfully',
-            'data' => $order->fresh(),
+            'data' => $orderData,
         ]);
     }
 }
