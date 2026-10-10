@@ -1,0 +1,10 @@
+# append to Laravel's default .gitignore
+/node_modules
+/public/build
+/public/hot
+/.env.e2e
+/qa-logs
+/e2e/test-results
+/e2e/playwright-report
+/e2e/blob-report
+# commit these:  composer.lock  package-lock.json

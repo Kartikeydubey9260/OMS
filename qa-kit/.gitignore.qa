@@ -1,0 +1,9 @@
+# append to the repo .gitignore
+qa-logs/
+e2e/test-results/
+e2e/playwright-report/
+e2e/blob-report/
+.env.e2e
+public/build/
+public/hot
+node_modules/

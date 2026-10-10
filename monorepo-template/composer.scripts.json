@@ -1,0 +1,35 @@
+{
+  "_comment": "Reference copy of scripts in composer.json; keep synchronized.",
+  "scripts": {
+    "setup": [
+      "composer install",
+      "@php -r \\\"file_exists('.env') || copy('.env.example', '.env');\\\"",
+      "@php artisan key:generate --ansi",
+      "@php artisan migrate --seed --force",
+      "npm ci",
+      "npm run build"
+    ],
+    "dev": [
+      "Composer\\Config::disableProcessTimeout",
+      "npx concurrently -k -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names=api,queue,web"
+    ],
+    "build": "npm run build",
+    "lint": [
+      "pint --test",
+      "npm run lint"
+    ],
+    "fix": [
+      "pint",
+      "npm run format"
+    ],
+    "analyse": "phpstan analyse --memory-limit=1G --no-progress",
+    "test": [
+      "@php artisan config:clear --ansi",
+      "pest --compact"
+    ],
+    "test:unit": "npm run test:unit",
+    "test:e2e": "npm run e2e",
+    "qa": "bash qa-kit/scripts/qa/run-all.sh",
+    "qa:dry": "bash qa-kit/scripts/qa/dry-run.sh 2"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "packages/OMS/Admin/src/Resources/assets/*"
+      ]
+    },
+    "types": [
+      "vite/client",
+      "vitest/globals"
+    ]
+  },
+  "include": [
+    "packages/OMS/**/*.ts",
+    "packages/OMS/**/*.tsx",
+    "vite.config.ts",
+    "qa-kit/e2e/**/*.ts"
+  ]
+}
