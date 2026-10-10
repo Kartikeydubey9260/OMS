@@ -9,13 +9,11 @@ interface CustomerDetail {
     email: string;
     phone?: string;
     address?: string;
-    stats?: {
-        total_orders: number;
-        pending_orders: number;
-        completed_orders: number;
-        cancelled_orders: number;
-        total_spent: number;
-    };
+    total_orders?: number;
+    pending_orders?: number;
+    completed_orders?: number;
+    cancelled_orders?: number;
+    total_order_value?: number | string;
     recent_orders?: {
         id: number;
         order_number: string;
@@ -60,12 +58,12 @@ export const CustomerDetailPage: React.FC = () => {
         );
     }
 
-    const stats = customer.stats || {
-        total_orders: 0,
-        pending_orders: 0,
-        completed_orders: 0,
-        cancelled_orders: 0,
-        total_spent: 0,
+    const stats = {
+        total_orders: Number(customer.total_orders || 0),
+        pending_orders: Number(customer.pending_orders || 0),
+        completed_orders: Number(customer.completed_orders || 0),
+        cancelled_orders: Number(customer.cancelled_orders || 0),
+        total_spent: Number(customer.total_order_value || 0),
     };
 
     return (

@@ -38,7 +38,7 @@ export const Navbar: React.FC = () => {
                     : countRes.data ?? 0;
                 setUnreadCount(Number(countVal));
 
-                const listRes = await api.get<NotificationItem[]>("/notifications");
+                const listRes = await api.get<NotificationItem[]>("/notifications?unread=1");
                 setNotifications(listRes.data || []);
             } catch {
                 // Ignore background error
@@ -137,7 +137,7 @@ export const Navbar: React.FC = () => {
                             <Link
                                 key={link.to}
                                 to={link.to}
-                                data-testid={link.testId}
+                                data-testid={mobileOpen ? undefined : link.testId}
                                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                                     location.pathname.startsWith(link.to)
                                         ? "bg-slate-800 text-white"
@@ -267,7 +267,7 @@ export const Navbar: React.FC = () => {
                             <Link
                                 key={link.to}
                                 to={link.to}
-                                data-testid={`${link.testId}-mobile`}
+                                data-testid={link.testId}
                                 onClick={() => setMobileOpen(false)}
                                 className={`block px-3 py-2 rounded-md text-base font-medium ${
                                     location.pathname.startsWith(link.to)

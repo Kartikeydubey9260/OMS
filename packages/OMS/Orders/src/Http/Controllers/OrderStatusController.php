@@ -144,11 +144,16 @@ class OrderStatusController extends Controller
                 'remarks' => $validated['remarks'] ?? null,
             ]);
 
+            $desc = "Status changed from {$fromStatus} to {$targetStatus}";
+            if (!empty($validated['remarks'])) {
+                $desc .= ": " . $validated['remarks'];
+            }
+
             OrderActivity::create([
                 'order_id' => $order->id,
                 'user_id' => $user->id,
                 'type' => 'status_changed',
-                'description' => "Status changed from {$fromStatus} to {$targetStatus}",
+                'description' => $desc,
             ]);
 
             // Notifications on confirmed or cancelled

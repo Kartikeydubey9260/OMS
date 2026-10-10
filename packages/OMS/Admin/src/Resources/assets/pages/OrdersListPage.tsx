@@ -32,7 +32,7 @@ export const OrdersListPage: React.FC = () => {
     const assigneeParam = searchParams.get("assigned_to") || "";
     const dateFromParam = searchParams.get("date_from") || "";
     const dateToParam = searchParams.get("date_to") || "";
-    const sortParam = searchParams.get("sort") || "id";
+    const sortParam = searchParams.get("sort") || "order_date";
     const directionParam = (searchParams.get("direction") as "asc" | "desc") || "desc";
     const pageParam = parseInt(searchParams.get("page") || "1", 10);
     const perPageParam = parseInt(searchParams.get("per_page") || "15", 10);

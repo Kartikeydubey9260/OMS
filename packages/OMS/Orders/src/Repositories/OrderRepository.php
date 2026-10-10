@@ -66,15 +66,17 @@ class OrderRepository
             $query->where(function ($q) use ($escaped) {
                 $q->where('order_number', 'like', "%{$escaped}%")
                     ->orWhereHas('customer', function ($cq) use ($escaped) {
-                        $cq->where('name', 'like', "%{$escaped}%")
-                            ->orWhere('email', 'like', "%{$escaped}%");
+                        $cq->withTrashed()->where(function ($q) use ($escaped) {
+                            $q->where('name', 'like', "%{$escaped}%")
+                                ->orWhere('email', 'like', "%{$escaped}%");
+                        });
                     })
                     ->orWhereHas('items', function ($iq) use ($escaped) {
                         $iq->where('product_name', 'like', "%{$escaped}%")
                             ->orWhere('sku', 'like', "%{$escaped}%");
                     })
                     ->orWhereHas('assignee', function ($aq) use ($escaped) {
-                        $aq->where('name', 'like', "%{$escaped}%");
+                        $aq->withTrashed()->where('name', 'like', "%{$escaped}%");
                     });
             });
         }

@@ -18,8 +18,7 @@ interface OrderDetail {
     status: string;
     priority: string;
     order_date: string;
-    assigned_to: number | null;
-    assigned_user: { id: number; name: string } | null;
+    assigned_to: { id: number; name: string; email?: string } | null;
     notes?: string;
     version: number;
     items: {
@@ -194,7 +193,7 @@ export const OrderDetailPage: React.FC = () => {
     const handleStatusSubmit = async () => {
         if (!selectedStatus) return;
         try {
-            await api.patch(`/orders/${order.id}/status`, {
+            await api.post(`/orders/${order.id}/status`, {
                 status: selectedStatus,
                 remarks: statusRemarks || undefined,
             });
@@ -211,7 +210,7 @@ export const OrderDetailPage: React.FC = () => {
     const handleAssignSubmit = async () => {
         if (!selectedAssignee) return;
         try {
-            await api.patch(`/orders/${order.id}/assign`, {
+            await api.post(`/orders/${order.id}/assign`, {
                 assigned_to: parseInt(selectedAssignee, 10),
             });
             toast.success("Order assignee updated.");
@@ -227,7 +226,7 @@ export const OrderDetailPage: React.FC = () => {
         if (!noteInput.trim()) return;
         try {
             await api.post(`/orders/${order.id}/notes`, {
-                note: noteInput.trim(),
+                body: noteInput.trim(),
             });
             toast.success("Note added successfully.");
             setNoteModalOpen(false);
@@ -246,7 +245,7 @@ export const OrderDetailPage: React.FC = () => {
         }
         setCancelError("");
         try {
-            await api.patch(`/orders/${order.id}/status`, {
+            await api.post(`/orders/${order.id}/status`, {
                 status: "cancelled",
                 remarks: cancelReason.trim(),
             });
@@ -409,7 +408,7 @@ export const OrderDetailPage: React.FC = () => {
                     <div className="text-sm text-gray-600">
                         Assignee:{" "}
                         <span data-testid="order-assignee" className="font-bold text-gray-900">
-                            {order.assigned_user?.name || "Unassigned"}
+                            {order.assigned_to?.name || "Unassigned"}
                         </span>
                     </div>
                     <div className="text-xs text-gray-500">

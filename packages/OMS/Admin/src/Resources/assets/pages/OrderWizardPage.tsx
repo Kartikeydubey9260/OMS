@@ -69,7 +69,7 @@ export const OrderWizardPage: React.FC = () => {
         setCustomerResults([]);
         if (!customerSearch.trim()) return;
         const timer = setTimeout(() => {
-            api.get<CustomerOption[]>(`/customers/lookup?search=${encodeURIComponent(customerSearch.trim())}`)
+            api.get<CustomerOption[]>(`/customers/lookup?q=${encodeURIComponent(customerSearch.trim())}`)
                 .then((res) => setCustomerResults(res.data || []))
                 .catch(() => {});
         }, 50);
@@ -81,7 +81,7 @@ export const OrderWizardPage: React.FC = () => {
         setProductResults([]);
         if (!productSearch.trim()) return;
         const timer = setTimeout(() => {
-            api.get<ProductOption[]>(`/products/lookup?search=${encodeURIComponent(productSearch.trim())}`)
+            api.get<ProductOption[]>(`/products/lookup?q=${encodeURIComponent(productSearch.trim())}`)
                 .then((res) => setProductResults(res.data || []))
                 .catch(() => {});
         }, 50);
