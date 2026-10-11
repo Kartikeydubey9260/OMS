@@ -197,6 +197,54 @@ class ProductController extends Controller
         ]);
     }
 
+    public function destroy(int $id): JsonResponse
+    {
+        $user = Auth::user();
+        if (! $user || ! $user->hasRole('admin')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This action is unauthorized.',
+                'code' => 'FORBIDDEN',
+                'errors' => [],
+            ], 403);
+        }
+
+        $product = $this->productRepository->find($id);
+        if (! $product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found.',
+                'code' => 'NOT_FOUND',
+                'errors' => [],
+            ], 404);
+        }
+
+        // Order items restrict deletion (products.*.restrictOnDelete); keep history intact.
+        if ($product->orderItems()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product has order history and cannot be deleted.',
+                'code' => 'CONFLICT',
+                'errors' => [],
+            ], 422);
+        }
+
+        $this->productRepository->delete($product);
+
+        AuditLogger::record(
+            action: 'product.deleted',
+            auditableType: 'product',
+            auditableId: $product->id,
+            label: "Deleted product {$product->name} (SKU: {$product->sku})"
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product deleted successfully',
+            'data' => null,
+        ]);
+    }
+
     protected function authorizePermission(string $permission): void
     {
         $user = Auth::user();

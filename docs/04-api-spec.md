@@ -53,9 +53,12 @@ Implement centrally in `bootstrap/app.php` exception renderer + a `ApiResponse` 
 | POST    | /users                  | `name,email,password,role,is_active`                                                  |
 | GET/PUT | /users/{id}             |                                                                                       |
 | DELETE  | /users/{id}             | soft delete; cannot delete self                                                       |
-| GET     | /roles                  | roles with permissions                                                                |
+| GET     | /roles                  | web-guard roles (Spatie row per role name, guard `web`) with `permissions[]` and `users_count` (live pivot count) |
+| POST    | /roles                  | `{name}` (`roles.manage`)                                                             |
+| PUT     | /roles/{id}             | `{name}` (`roles.manage`)                                                             |
+| DELETE  | /roles/{id}             | `roles.manage`; protected roles (admin/super-admin) and roles still in use are rejected |
 | PUT     | /roles/{id}/permissions | `{permissions: [..]}` (`roles.manage`)                                                |
-| GET     | /permissions            | all permissions                                                                       |
+| GET     | /permissions            | permissions scoped to the `web` guard only (seeders keep parallel `sanctum` rows for tokens, excluded here) |
 | GET     | /users/assignable       | id+name of active users who can be assigned orders (used by dropdowns; Manager+Admin) |
 
 ## Customers
@@ -73,7 +76,7 @@ Implement centrally in `bootstrap/app.php` exception renderer + a `ApiResponse` 
 
 | Method | Path                 | Permission                                                         |
 | ------ | -------------------- | ------------------------------------------------------------------ |
-| GET    | /products            | `products.view` — `?search&status&low_stock&page&sort`             |
+| GET    | /products            | `products.view` — `?search&status&low_stock&price_min&price_max&page&sort&direction` |
 | POST   | /products            | `products.manage`                                                  |
 | GET    | /products/{id}       | `products.view`                                                    |
 | PUT    | /products/{id}       | `products.manage` (audited incl. price/stock changes)              |
@@ -138,8 +141,41 @@ Client-sent `unit_price`, `subtotal`, `tax`, `total` are **ignored**. Initial st
 | ------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | GET    | /dashboard/summary                                | counts per status, total revenue (completed orders), avg order value, total customers, total products |
 | GET    | /dashboard/status-distribution                    | `[{status,count}]`                                                                                    |
-| GET    | /dashboard/revenue-trend                          | `?period=day                                                                                          | week | month&from&to`→`[{label, revenue, orders}]` |
+| GET    | /dashboard/revenue-trend                          | `?period=day\|week\|month&from&to` → `[{label, revenue, orders}]`                          |
+| GET    | /dashboard/reports                                | report hub (`reports.view`); filters + per-client/per-product breakdowns (see below)                  |
+| GET    | /dashboard/reports/export                         | `?type&format=csv\|xls\|xlsx\|pdf` — exports the **full filtered** dataset (filters like the hub, no pagination) |
 | GET    | /dashboard/top-products, /dashboard/recent-orders | optional                                                                                              |
+
+### `GET /dashboard/reports`
+
+`reports.view` (Admin, Manager). Response `data`:
+
+```json
+{
+  "summary": { "total_revenue", "total_orders", "total_customers", "total_products", "total_items_sold", "average_order_value" },
+  "orders_by_status": [{ "status", "count", "revenue" }],
+  "top_products_by_quantity": [/* ≤ `top` */],
+  "top_products_by_price": [/* ≤ `top` */],
+  "top_clients_by_orders": [],
+  "top_clients_by_price": [],
+  "per_client_report": {
+    "data": [{ "client_id", "client_name", "email", "orders_count", "total_quantity", "avg_order_value", "total_spent", "latest_order_date" }],
+    "meta": { "current_page", "per_page", "total", "last_page", "from", "to" }
+  },
+  "per_product_report": {
+    "data": [{ "product_id", "product_name", "sku", "orders_count", "total_quantity_sold", "total_revenue" }],
+    "meta": { /* same */ }
+  },
+  "filter_options": { "years", "months", "statuses", "clients", "products" }
+}
+```
+
+Query params: `top` (default 10), report filters `year, month, status, start_date, end_date, customer_id, product_id`, and server-driven list params **`page, per_page (≤100, default 10), sort, direction`** applied to both breakdowns — they paginate and sort exactly like the other tables.
+
+Sortable columns (whitelisted; unknown `sort` falls back to the default instead of 422):
+
+- `per_client_report`: `client_name, orders_count, total_quantity, avg_order_value, total_spent, latest_order_date` — default `total_spent desc`
+- `per_product_report`: `product_name, sku, orders_count, total_quantity_sold, total_revenue` — default `total_revenue desc`
 
 Revenue definition: sum of `total` of orders with status `completed` (document this; alternative: confirmed+). Cache 60s per params.
 

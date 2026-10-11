@@ -85,11 +85,23 @@ it('ranks top clients by order count and by order value', function () {
 it('renders per-client and per-product detailed reports', function () {
     $data = getJson('/api/dashboard/reports')->assertOk()->json('data');
 
-    $clientRows = collect($data['per_client_report'])->keyBy('client_id');
+    $clientRows = collect($data['per_client_report']['data'])->keyBy('client_id');
     expect($clientRows)->toHaveKeys([(string) $this->customerA->id, (string) $this->customerB->id]);
 
-    $productRows = collect($data['per_product_report'])->keyBy('product_id');
+    $productRows = collect($data['per_product_report']['data'])->keyBy('product_id');
     expect($productRows)->toHaveKeys([(string) $this->productX->id, (string) $this->productY->id]);
+
+    expect($data['per_client_report']['meta'])->toMatchArray([
+        'current_page' => 1,
+        'per_page' => 10,
+        'total' => 2,
+        'last_page' => 1,
+    ])->and($data['per_product_report']['meta'])->toMatchArray([
+        'current_page' => 1,
+        'per_page' => 10,
+        'total' => 2,
+        'last_page' => 1,
+    ]);
 });
 
 it('filters by status, year, month and date range', function () {
@@ -117,12 +129,44 @@ it('filters by status, year, month and date range', function () {
 it('filters per client and per product', function () {
     $perClient = getJson('/api/dashboard/reports?customer_id='.$this->customerA->id)->assertOk()->json('data');
     expect(collect($perClient['top_clients_by_orders'])->pluck('client_id'))->toHaveCount(1)
-        ->and(collect($perClient['per_client_report'])->pluck('client_id'))->toHaveCount(1)
+        ->and(collect($perClient['per_client_report']['data'])->pluck('client_id'))->toHaveCount(1)
         ->and($perClient['summary']['total_orders'])->toBe(2);
 
     $perProduct = getJson('/api/dashboard/reports?product_id='.$this->productY->id)->assertOk()->json('data');
-    expect(collect($perProduct['per_product_report'])->pluck('product_id'))->toHaveCount(1)
+    expect(collect($perProduct['per_product_report']['data'])->pluck('product_id'))->toHaveCount(1)
         ->and((int) $perProduct['summary']['total_items_sold'])->toBe(5);
+});
+
+it('paginates and sorts the detailed breakdowns like the other tables', function () {
+    // Customer A spent $1000 (6×100 + 4×100); customer B spent $2250 (5×450).
+
+    // Default: total_spent descending, 10 per page.
+    $default = getJson('/api/dashboard/reports')->assertOk()->json('data');
+    expect($default['per_client_report']['data'][0]['client_id'])->toBe($this->customerB->id);
+
+    // Sort by total_spent ascending flips the order.
+    $asc = getJson('/api/dashboard/reports?sort=total_spent&direction=asc')->assertOk()->json('data');
+    expect($asc['per_client_report']['data'][0]['client_id'])->toBe($this->customerA->id);
+
+    // Page 2 with per_page=1 shows the second client, with correct meta.
+    $page2 = getJson('/api/dashboard/reports?page=2&per_page=1&sort=total_spent&direction=desc')->assertOk()->json('data');
+    expect($page2['per_client_report']['meta'])->toMatchArray([
+        'current_page' => 2,
+        'per_page' => 1,
+        'total' => 2,
+        'last_page' => 2,
+        'from' => 2,
+        'to' => 2,
+    ])->and($page2['per_client_report']['data'][0]['client_id'])->toBe($this->customerA->id);
+
+    // Per-product breakdown defaults to total_revenue descending and can sort ascending.
+    $prodAsc = getJson('/api/dashboard/reports?sort=total_revenue&direction=asc&per_page=1')->assertOk()->json('data');
+    expect($prodAsc['per_product_report']['data'][0]['product_id'])->toBe($this->productX->id)
+        ->and($prodAsc['per_product_report']['meta']['total'])->toBe(2);
+
+    // Unknown sort columns fall back to the default order instead of 422s.
+    $fallback = getJson('/api/dashboard/reports?sort=does.not.exist')->assertOk()->json('data');
+    expect($fallback['per_client_report']['data'][0]['client_id'])->toBe($this->customerB->id);
 });
 
 it('provides filter options', function () {

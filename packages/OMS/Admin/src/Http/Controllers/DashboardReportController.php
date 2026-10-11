@@ -35,10 +35,16 @@ class DashboardReportController extends Controller
         $filters = $this->filtersFrom($request);
         $limit = $this->limitFrom($request);
 
+        // Detailed breakdowns are server-driven: page, page size, and sort.
+        $page = max(1, (int) $request->query('page', 1));
+        $perPage = (int) $request->query('per_page', 10);
+        $sort = trim((string) $request->query('sort', ''));
+        $direction = strtolower((string) $request->query('direction', 'desc')) === 'asc' ? 'asc' : 'desc';
+
         return response()->json([
             'success' => true,
             'message' => 'Reports retrieved successfully',
-            'data' => $this->reportService->build($filters, $limit),
+            'data' => $this->reportService->build($filters, $limit, $page, $perPage, $sort, $direction),
         ]);
     }
 
@@ -269,7 +275,7 @@ class DashboardReportController extends Controller
      */
     protected function spreadsheet(string $viewName, array $headers, array $rows, bool $styled): Spreadsheet
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle(substr($viewName, 0, 31));
 

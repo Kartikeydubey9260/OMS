@@ -6,6 +6,7 @@ namespace OMS\Admin\Services;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use OMS\Customers\Models\Customer;
 use OMS\Orders\Models\Order;
 use OMS\Products\Models\Product;
@@ -45,10 +46,37 @@ class ReportService
     ];
 
     /**
+     * Whitelisted sort columns for the per-client breakdown.
+     *
+     * @var array<string, string>
+     */
+    public const PER_CLIENT_SORTS = [
+        'client_name' => 'customers.name',
+        'orders_count' => 'p_stats.orders_count',
+        'total_quantity' => 'q_stats.total_quantity',
+        'avg_order_value' => 'p_stats.avg_order_value',
+        'total_spent' => 'p_stats.total_spent',
+        'latest_order_date' => 'p_stats.latest_order_date',
+    ];
+
+    /**
+     * Whitelisted sort columns for the per-product breakdown.
+     *
+     * @var array<string, string>
+     */
+    public const PER_PRODUCT_SORTS = [
+        'product_name' => 'products.name',
+        'sku' => 'products.sku',
+        'orders_count' => 'i_stats.orders_count',
+        'total_quantity_sold' => 'i_stats.total_quantity_sold',
+        'total_revenue' => 'i_stats.total_revenue',
+    ];
+
+    /**
      * @param  array<string, mixed>  $filters
      * @return array<string, mixed>
      */
-    public function build(array $filters = [], int $limit = 10): array
+    public function build(array $filters = [], int $limit = 10, int $page = 1, int $perPage = 10, string $sort = '', string $direction = 'desc'): array
     {
         return [
             'summary' => $this->summary($filters),
@@ -57,9 +85,44 @@ class ReportService
             'top_products_by_price' => $this->topProducts($filters, 'price', $limit),
             'top_clients_by_orders' => $this->topCustomers($filters, 'orders', $limit),
             'top_clients_by_price' => $this->topCustomers($filters, 'price', $limit),
-            'per_client_report' => $this->perCustomer($filters),
-            'per_product_report' => $this->perProduct($filters),
+            'per_client_report' => $this->perCustomer($filters, $perPage, $page, $sort, $direction),
+            'per_product_report' => $this->perProduct($filters, $perPage, $page, $sort, $direction),
             'filter_options' => $this->filterOptions(),
+        ];
+    }
+
+    /**
+     * Resolve a whitelisted sort column, falling back to the default.
+     *
+     * @param  array<string, string>  $whitelist
+     */
+    private function sortColumn(array $whitelist, string $sort, string $default): string
+    {
+        return $whitelist[$sort] ?? $default;
+    }
+
+    /**
+     * Run a query-builder pagination and shape the result as a
+     * { data, meta } payload matching the other server-driven tables.
+     *
+     * @return array{data: array<int, \stdClass>, meta: array<string, int|null>}
+     */
+    private function paginateBreakdown(Builder $query, int $page, int $perPage): array
+    {
+        $perPage = max(1, min($perPage, 100));
+
+        $paginator = $query->paginate($perPage, ['*'], 'page', max(1, $page));
+
+        return [
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+            ],
         ];
     }
 
@@ -70,7 +133,7 @@ class ReportService
     public function summary(array $filters): array
     {
         $orders = $this->applyOrderFilters(
-            \Illuminate\Support\Facades\DB::table('orders')->whereNull('orders.deleted_at'),
+            DB::table('orders')->whereNull('orders.deleted_at'),
             $filters,
         );
 
@@ -78,7 +141,7 @@ class ReportService
         $totalRevenue = round((float) (clone $orders)->sum('orders.total'), 2);
         $avgOrderValue = $totalOrders > 0 ? round($totalRevenue / $totalOrders, 2) : 0.0;
 
-        $items = \Illuminate\Support\Facades\DB::table('order_items')
+        $items = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->whereNull('orders.deleted_at');
         $items = $this->applyOrderFilters($items, $filters);
@@ -96,17 +159,17 @@ class ReportService
 
     /**
      * @param  array<string, mixed>  $filters
-     * @return Collection<int, object>
+     * @return Collection<int, \stdClass>
      */
     public function ordersByStatus(array $filters): Collection
     {
         $query = $this->applyOrderFilters(
-            \Illuminate\Support\Facades\DB::table('orders')->whereNull('orders.deleted_at'),
+            DB::table('orders')->whereNull('orders.deleted_at'),
             $filters,
         );
 
         return $query
-            ->select('orders.status', \Illuminate\Support\Facades\DB::raw('COUNT(*) as count'), \Illuminate\Support\Facades\DB::raw('COALESCE(SUM(orders.total), 0) as revenue'))
+            ->select('orders.status', DB::raw('COUNT(*) as count'), DB::raw('COALESCE(SUM(orders.total), 0) as revenue'))
             ->groupBy('orders.status')
             ->orderByDesc('revenue')
             ->get();
@@ -114,11 +177,11 @@ class ReportService
 
     /**
      * @param  array<string, mixed>  $filters
-     * @return Collection<int, object>
+     * @return Collection<int, \stdClass>
      */
     public function topProducts(array $filters, string $sortBy = 'quantity', int $limit = 10): Collection
     {
-        $query = \Illuminate\Support\Facades\DB::table('order_items')
+        $query = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->join('products', 'order_items.product_id', '=', 'products.id')
             ->whereNull('orders.deleted_at');
@@ -132,9 +195,9 @@ class ReportService
                 'products.name as product_name',
                 'products.sku',
                 'products.price as unit_price',
-                \Illuminate\Support\Facades\DB::raw('SUM(order_items.quantity) as total_quantity'),
-                \Illuminate\Support\Facades\DB::raw('COALESCE(SUM(order_items.line_total), 0) as total_revenue'),
-                \Illuminate\Support\Facades\DB::raw('COUNT(DISTINCT orders.id) as orders_count'),
+                DB::raw('SUM(order_items.quantity) as total_quantity'),
+                DB::raw('COALESCE(SUM(order_items.line_total), 0) as total_revenue'),
+                DB::raw('COUNT(DISTINCT orders.id) as orders_count'),
             )
             ->groupBy('products.id', 'products.name', 'products.sku', 'products.price')
             ->orderByDesc($orderColumn)
@@ -144,11 +207,11 @@ class ReportService
 
     /**
      * @param  array<string, mixed>  $filters
-     * @return Collection<int, object>
+     * @return Collection<int, \stdClass>
      */
     public function topCustomers(array $filters, string $sortBy = 'orders', int $limit = 10): Collection
     {
-        $query = \Illuminate\Support\Facades\DB::table('orders')
+        $query = DB::table('orders')
             ->join('customers', 'orders.customer_id', '=', 'customers.id')
             ->whereNull('orders.deleted_at');
         $query = $this->applyOrderFilters($query, $filters);
@@ -160,8 +223,8 @@ class ReportService
                 'customers.id as client_id',
                 'customers.name as client_name',
                 'customers.email',
-                \Illuminate\Support\Facades\DB::raw('COUNT(orders.id) as orders_count'),
-                \Illuminate\Support\Facades\DB::raw('COALESCE(SUM(orders.total), 0) as total_spent'),
+                DB::raw('COUNT(orders.id) as orders_count'),
+                DB::raw('COALESCE(SUM(orders.total), 0) as total_spent'),
             )
             ->groupBy('customers.id', 'customers.name', 'customers.email')
             ->orderByDesc($orderColumn)
@@ -170,32 +233,38 @@ class ReportService
     }
 
     /**
+     * Per-client breakdown (orders, units, revenue grouped by client).
+     *
+     * Passes $perPage = null to get the full, unsorted collection (used by
+     * exports); otherwise returns a paginated { data, meta } payload with an
+     * optional whitelisted sort, mirroring the other server-driven tables.
+     *
      * @param  array<string, mixed>  $filters
-     * @return Collection<int, object>
+     * @return Collection<int, \stdClass>|array{data: array<int, \stdClass>, meta: array<string, int|null>}
      */
-    public function perCustomer(array $filters): Collection
+    public function perCustomer(array $filters, ?int $perPage = null, int $page = 1, string $sort = 'total_spent', string $direction = 'desc'): Collection|array
     {
-        $stats = \Illuminate\Support\Facades\DB::table('orders')->whereNull('orders.deleted_at');
+        $stats = DB::table('orders')->whereNull('orders.deleted_at');
         $stats = $this->applyOrderFilters($stats, $filters);
         $stats = $stats
             ->select(
                 'orders.customer_id',
-                \Illuminate\Support\Facades\DB::raw('COUNT(orders.id) as orders_count'),
-                \Illuminate\Support\Facades\DB::raw('COALESCE(SUM(orders.total), 0) as total_spent'),
-                \Illuminate\Support\Facades\DB::raw('COALESCE(AVG(orders.total), 0) as avg_order_value'),
-                \Illuminate\Support\Facades\DB::raw('MAX(orders.order_date) as latest_order_date'),
+                DB::raw('COUNT(orders.id) as orders_count'),
+                DB::raw('COALESCE(SUM(orders.total), 0) as total_spent'),
+                DB::raw('COALESCE(AVG(orders.total), 0) as avg_order_value'),
+                DB::raw('MAX(orders.order_date) as latest_order_date'),
             )
             ->groupBy('orders.customer_id');
 
-        $quantities = \Illuminate\Support\Facades\DB::table('order_items')
+        $quantities = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->whereNull('orders.deleted_at');
         $quantities = $this->applyOrderFilters($quantities, $filters);
         $quantities = $quantities
-            ->select('orders.customer_id', \Illuminate\Support\Facades\DB::raw('SUM(order_items.quantity) as total_quantity'))
+            ->select('orders.customer_id', DB::raw('SUM(order_items.quantity) as total_quantity'))
             ->groupBy('orders.customer_id');
 
-        $query = \Illuminate\Support\Facades\DB::table('customers')
+        $query = DB::table('customers')
             ->leftJoinSub($stats, 'p_stats', 'customers.id', '=', 'p_stats.customer_id')
             ->leftJoinSub($quantities, 'q_stats', 'customers.id', '=', 'q_stats.customer_id');
 
@@ -206,41 +275,47 @@ class ReportService
             $query->whereNotNull('p_stats.customer_id');
         }
 
-        return $query
-            ->select(
-                'customers.id as client_id',
-                'customers.name as client_name',
-                'customers.email',
-                'p_stats.orders_count',
-                'p_stats.total_spent',
-                'p_stats.avg_order_value',
-                'p_stats.latest_order_date',
-                \Illuminate\Support\Facades\DB::raw('COALESCE(q_stats.total_quantity, 0) as total_quantity'),
-            )
-            ->orderByDesc('p_stats.total_spent')
-            ->get();
+        $query->select(
+            'customers.id as client_id',
+            'customers.name as client_name',
+            'customers.email',
+            'p_stats.orders_count',
+            'p_stats.total_spent',
+            'p_stats.avg_order_value',
+            'p_stats.latest_order_date',
+            DB::raw('COALESCE(q_stats.total_quantity, 0) as total_quantity'),
+        );
+
+        if ($perPage === null) {
+            return $query->orderByDesc('p_stats.total_spent')->get();
+        }
+
+        $column = $this->sortColumn(self::PER_CLIENT_SORTS, $sort, 'p_stats.total_spent');
+        $query->orderBy($column, $direction === 'asc' ? 'asc' : 'desc');
+
+        return $this->paginateBreakdown($query, $page, $perPage);
     }
 
     /**
      * @param  array<string, mixed>  $filters
-     * @return Collection<int, object>
+     * @return Collection<int, \stdClass>|array{data: array<int, \stdClass>, meta: array<string, int|null>}
      */
-    public function perProduct(array $filters): Collection
+    public function perProduct(array $filters, ?int $perPage = null, int $page = 1, string $sort = 'total_revenue', string $direction = 'desc'): Collection|array
     {
-        $stats = \Illuminate\Support\Facades\DB::table('order_items')
+        $stats = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->whereNull('orders.deleted_at');
         $stats = $this->applyOrderFilters($stats, $filters);
         $stats = $stats
             ->select(
                 'order_items.product_id',
-                \Illuminate\Support\Facades\DB::raw('COUNT(DISTINCT orders.id) as orders_count'),
-                \Illuminate\Support\Facades\DB::raw('SUM(order_items.quantity) as total_quantity_sold'),
-                \Illuminate\Support\Facades\DB::raw('COALESCE(SUM(order_items.line_total), 0) as total_revenue'),
+                DB::raw('COUNT(DISTINCT orders.id) as orders_count'),
+                DB::raw('SUM(order_items.quantity) as total_quantity_sold'),
+                DB::raw('COALESCE(SUM(order_items.line_total), 0) as total_revenue'),
             )
             ->groupBy('order_items.product_id');
 
-        $query = \Illuminate\Support\Facades\DB::table('products')
+        $query = DB::table('products')
             ->joinSub($stats, 'i_stats', 'products.id', '=', 'i_stats.product_id');
 
         $productId = $filters['product_id'] ?? null;
@@ -248,18 +323,24 @@ class ReportService
             $query->where('products.id', (int) $productId);
         }
 
-        return $query
-            ->select(
-                'products.id as product_id',
-                'products.name as product_name',
-                'products.sku',
-                'products.price as unit_price',
-                'i_stats.orders_count',
-                'i_stats.total_quantity_sold',
-                'i_stats.total_revenue',
-            )
-            ->orderByDesc('i_stats.total_revenue')
-            ->get();
+        $query->select(
+            'products.id as product_id',
+            'products.name as product_name',
+            'products.sku',
+            'products.price as unit_price',
+            'i_stats.orders_count',
+            'i_stats.total_quantity_sold',
+            'i_stats.total_revenue',
+        );
+
+        if ($perPage === null) {
+            return $query->orderByDesc('i_stats.total_revenue')->get();
+        }
+
+        $column = $this->sortColumn(self::PER_PRODUCT_SORTS, $sort, 'i_stats.total_revenue');
+        $query->orderBy($column, $direction === 'asc' ? 'asc' : 'desc');
+
+        return $this->paginateBreakdown($query, $page, $perPage);
     }
 
     /**
@@ -333,7 +414,7 @@ class ReportService
         if ($productId !== null && $productId !== '' && $productId !== 'all') {
             $productId = (int) $productId;
             $query->whereExists(function ($sub) use ($productId) {
-                $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                $sub->select(DB::raw(1))
                     ->from('order_items')
                     ->whereColumn('order_items.order_id', 'orders.id')
                     ->where('order_items.product_id', $productId);

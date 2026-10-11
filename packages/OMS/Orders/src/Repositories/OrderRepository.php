@@ -66,6 +66,9 @@ class OrderRepository
             $query->where(function ($q) use ($escaped) {
                 $q->where('order_number', 'like', "%{$escaped}%")
                     ->orWhereHas('customer', function ($cq) use ($escaped) {
+                        // withTrashed is a runtime macro registered by the SoftDeletes trait;
+                        // larastan does not model Eloquent builder macros.
+                        /** @phpstan-ignore-next-line macro method added by SoftDeletes */
                         $cq->withTrashed()->where(function ($q) use ($escaped) {
                             $q->where('name', 'like', "%{$escaped}%")
                                 ->orWhere('email', 'like', "%{$escaped}%");
@@ -76,6 +79,7 @@ class OrderRepository
                             ->orWhere('sku', 'like', "%{$escaped}%");
                     })
                     ->orWhereHas('assignee', function ($aq) use ($escaped) {
+                        /** @phpstan-ignore-next-line macro method added by SoftDeletes */
                         $aq->withTrashed()->where('name', 'like', "%{$escaped}%");
                     });
             });

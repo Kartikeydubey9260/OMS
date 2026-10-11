@@ -56,9 +56,16 @@ This command will:
 - Run `php artisan migrate:fresh --seed` automatically to initialize the database with schema and default users.
 
 **Default Credentials (from Seeder):**
-- Admin: `admin@example.com` / `password`
-- Manager: `manager@example.com` / `password`
-- Staff: `staff@example.com` / `password`
+
+All seeded accounts use the password `password`:
+
+| Role    | Email                   | Name            |
+| ------- | ----------------------- | --------------- |
+| Admin   | `admin@oms.test`        | Admin User      |
+| Manager | `manager@oms.test`      | Manager User    |
+| Manager | `manager2@oms.test`     | Second Manager  |
+| Staff   | `staff@oms.test`        | Staff User      |
+| Staff   | `staff2@oms.test`       | Second Staff    |
 
 ### 5. Build Frontend Assets
 

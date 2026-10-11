@@ -170,3 +170,48 @@ it('adjusts stock by delta and rejects a result below zero', function () {
 
     expect($p->fresh()->stock_quantity)->toBe(10);
 });
+
+it('filters products by price range', function () {
+    actingAsRole('manager');
+    Product::factory()->create(['sku' => 'P-CHEAP', 'price' => 25]);
+    Product::factory()->create(['sku' => 'P-MID', 'price' => 150]);
+    Product::factory()->create(['sku' => 'P-PRICEY', 'price' => 500]);
+
+    $skus = fn (string $query) => collect(getJson("/api/products?{$query}")->json('data'))->pluck('sku')->all();
+
+    expect($skus('price_min=100'))->toContain('P-MID')->toContain('P-PRICEY')->not->toContain('P-CHEAP');
+    expect($skus('price_max=100'))->toContain('P-CHEAP')->not->toContain('P-MID')->not->toContain('P-PRICEY');
+    expect($skus('price_min=100&price_max=200'))->toContain('P-MID')->not->toContain('P-CHEAP')->not->toContain('P-PRICEY');
+});
+
+it('deletes a product without order history (admin only)', function () {
+    actingAsRole('admin');
+    $p = Product::factory()->create(['sku' => 'DEL-1']);
+
+    deleteJson("/api/products/{$p->id}")->assertOk();
+
+    expect(Product::withTrashed()->find($p->id))->not->toBeNull();
+    getJson("/api/products/{$p->id}")->assertNotFound();
+});
+
+it('refuses to delete a product with order history and keeps it readable', function () {
+    actingAsRole('admin');
+    $id = createOrderViaApi();
+    $item = Order::find($id)->items()->first();
+
+    deleteJson("/api/products/{$item->product_id}")
+        ->assertStatus(422)
+        ->assertJsonPath('code', 'CONFLICT');
+
+    expect(Product::find($item->product_id))->not->toBeNull();
+    getJson("/api/orders/{$id}")->assertOk();
+});
+
+it('forbids managers and staff from deleting products', function (string $role) {
+    actingAsRole($role);
+    $p = Product::factory()->create();
+
+    deleteJson("/api/products/{$p->id}")->assertForbidden();
+
+    expect(Product::find($p->id))->not->toBeNull();
+})->with(['manager', 'staff']);

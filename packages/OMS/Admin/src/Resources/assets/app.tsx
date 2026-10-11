@@ -14,8 +14,10 @@ import { OrderEditPage } from "./pages/OrderEditPage";
 import { CustomersListPage } from "./pages/CustomersListPage";
 import { CustomerCreatePage } from "./pages/CustomerCreatePage";
 import { CustomerDetailPage } from "./pages/CustomerDetailPage";
+import { CustomerEditPage } from "./pages/CustomerEditPage";
 import { ProductsListPage } from "./pages/ProductsListPage";
 import { ProductCreatePage } from "./pages/ProductCreatePage";
+import { ProductEditPage } from "./pages/ProductEditPage";
 import { UsersPage } from "./pages/UsersPage";
 import { AuditLogsPage } from "./pages/AuditLogsPage";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
@@ -180,6 +182,16 @@ export const App: React.FC = () => {
                         }
                     />
 
+                    {/* Edit Customer: Admin & Manager Only */}
+                    <Route
+                        path="/customers/:id/edit"
+                        element={
+                            <ProtectedRoute roles={["admin", "manager"]}>
+                                <CustomerEditPage />
+                            </ProtectedRoute>
+                        }
+                    />
+
                     {/* Products List: All Authenticated Roles */}
                     <Route
                         path="/products"
@@ -196,6 +208,16 @@ export const App: React.FC = () => {
                         element={
                             <ProtectedRoute roles={["admin"]}>
                                 <ProductCreatePage />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Edit Product: Admin Only */}
+                    <Route
+                        path="/products/:id/edit"
+                        element={
+                            <ProtectedRoute roles={["admin"]}>
+                                <ProductEditPage />
                             </ProtectedRoute>
                         }
                     />

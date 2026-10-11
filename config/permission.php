@@ -1,5 +1,6 @@
 <?php
 
+use OMS\Users\Models\User;
 use Spatie\Permission\DefaultTeamResolver;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -29,6 +30,15 @@ return [
          */
 
         'role' => Role::class,
+
+        /*
+         * When using the "HasRoles" trait from this package, we need to know which
+         * Eloquent model should be used as the user model for role relations such
+         * as `Role::users()` and user counts. The OMS user model is owned by the
+         * Users package.
+         */
+
+        'user' => User::class,
 
     ],
 

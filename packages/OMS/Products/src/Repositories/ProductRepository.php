@@ -32,6 +32,14 @@ class ProductRepository
             $query->whereColumn('stock_quantity', '<=', 'low_stock_threshold');
         }
 
+        if (isset($filters['price_min']) && $filters['price_min'] !== '') {
+            $query->where('price', '>=', (float) $filters['price_min']);
+        }
+
+        if (isset($filters['price_max']) && $filters['price_max'] !== '') {
+            $query->where('price', '<=', (float) $filters['price_max']);
+        }
+
         $sort = $filters['sort'] ?? 'created_at';
         $direction = strtolower($filters['direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
 

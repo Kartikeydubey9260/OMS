@@ -160,8 +160,8 @@ class OrderStatusController extends Controller
             ]);
 
             $desc = "Status changed from {$fromStatus} to {$targetStatus}";
-            if (!empty($validated['remarks'])) {
-                $desc .= ": " . $validated['remarks'];
+            if (! empty($validated['remarks'])) {
+                $desc .= ': '.$validated['remarks'];
             }
 
             OrderActivity::create([
