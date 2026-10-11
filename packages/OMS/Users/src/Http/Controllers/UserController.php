@@ -22,7 +22,7 @@ class UserController extends Controller
     {
         $this->authorizePermission('users.manage');
 
-        $perPage = min((int) ($request->input('per_page', 15)), (int) config('oms.max_per_page', 100));
+        $perPage = min((int) ($request->input('per_page', 10)), (int) config('oms.max_per_page', 100));
         $users = $this->userRepository->paginate($request->all(), $perPage);
 
         return response()->json([

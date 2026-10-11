@@ -33,7 +33,16 @@ class UserRepository
             $query->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN));
         }
 
-        return $query->latest('id')->paginate($perPage);
+        $sort = $filters['sort'] ?? 'created_at';
+        $direction = strtolower($filters['direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
+
+        if (in_array($sort, ['id', 'name', 'email', 'is_active', 'created_at'], true)) {
+            $query->orderBy($sort, $direction);
+        } else {
+            $query->latest('created_at');
+        }
+
+        return $query->paginate($perPage);
     }
 
     /**

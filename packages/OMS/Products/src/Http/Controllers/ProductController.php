@@ -24,7 +24,7 @@ class ProductController extends Controller
     {
         $this->authorizePermission('products.view');
 
-        $perPage = min((int) $request->input('per_page', 15), (int) config('oms.max_per_page', 100));
+        $perPage = min((int) $request->input('per_page', 10), (int) config('oms.max_per_page', 100));
         $products = $this->productRepository->paginate($request->all(), $perPage);
 
         return response()->json([

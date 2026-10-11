@@ -81,8 +81,8 @@ class OrderRepository
             });
         }
 
-        // Sorting
-        $sort = $filters['sort'] ?? 'order_date';
+        // Sorting (default: newest created first)
+        $sort = $filters['sort'] ?? 'created_at';
         $direction = strtolower($filters['direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
 
         if ($sort === 'customer') {

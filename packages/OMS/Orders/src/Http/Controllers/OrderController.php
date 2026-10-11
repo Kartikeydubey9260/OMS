@@ -63,7 +63,7 @@ class OrderController extends Controller
             }
         }
 
-        $perPage = min((int) $request->input('per_page', 15), (int) config('oms.max_per_page', 100));
+        $perPage = min((int) $request->input('per_page', 10), (int) config('oms.max_per_page', 100));
         $orders = $this->orderRepository->paginate($request->all(), $perPage, $user);
 
         $items = collect($orders->items())->map(function (Order $order) {

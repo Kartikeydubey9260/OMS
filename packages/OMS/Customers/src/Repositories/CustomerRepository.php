@@ -29,13 +29,13 @@ class CustomerRepository
             $query->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN));
         }
 
-        $sort = $filters['sort'] ?? 'id';
+        $sort = $filters['sort'] ?? 'created_at';
         $direction = strtolower($filters['direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
 
-        if (in_array($sort, ['id', 'name', 'email', 'created_at'], true)) {
+        if (in_array($sort, ['id', 'name', 'email', 'created_at', 'is_active'], true)) {
             $query->orderBy($sort, $direction);
         } else {
-            $query->latest('id');
+            $query->latest('created_at');
         }
 
         return $query->paginate($perPage);

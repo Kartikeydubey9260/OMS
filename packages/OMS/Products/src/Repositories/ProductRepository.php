@@ -32,13 +32,13 @@ class ProductRepository
             $query->whereColumn('stock_quantity', '<=', 'low_stock_threshold');
         }
 
-        $sort = $filters['sort'] ?? 'id';
+        $sort = $filters['sort'] ?? 'created_at';
         $direction = strtolower($filters['direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
 
-        if (in_array($sort, ['id', 'name', 'sku', 'price', 'stock_quantity', 'created_at'], true)) {
+        if (in_array($sort, ['id', 'name', 'sku', 'price', 'stock_quantity', 'status', 'created_at'], true)) {
             $query->orderBy($sort, $direction);
         } else {
-            $query->latest('id');
+            $query->latest('created_at');
         }
 
         return $query->paginate($perPage);

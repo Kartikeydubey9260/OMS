@@ -22,7 +22,7 @@ class CustomerController extends Controller
     {
         $this->authorizePermission('customers.view');
 
-        $perPage = min((int) $request->input('per_page', 15), (int) config('oms.max_per_page', 100));
+        $perPage = min((int) $request->input('per_page', 10), (int) config('oms.max_per_page', 100));
         $customers = $this->customerRepository->paginate($request->all(), $perPage);
 
         return response()->json([
