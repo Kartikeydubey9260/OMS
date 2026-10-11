@@ -124,11 +124,13 @@ export const CustomersListPage: React.FC = () => {
     };
 
     const handleDelete = async () => {
-        if (!deleteTarget) return;
+        const target = deleteTarget;
+        if (!target) return;
         setDeleting(true);
         try {
-            await api.delete(`/customers/${deleteTarget.id}`);
+            await api.delete(`/customers/${target.id}`);
             toast.success("Customer deleted successfully.");
+            setCustomers((prev) => prev.filter((c) => c.id !== target.id));
             setDeleteTarget(null);
             await fetchCustomers();
         } catch (err: unknown) {

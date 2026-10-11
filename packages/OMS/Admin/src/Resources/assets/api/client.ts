@@ -36,6 +36,7 @@ export async function request<T = any>(
     const auth = getStoredAuth();
     const headers: Record<string, string> = {
         Accept: "application/json",
+        "Cache-Control": "no-store",
         ...(options.headers as Record<string, string>),
     };
 

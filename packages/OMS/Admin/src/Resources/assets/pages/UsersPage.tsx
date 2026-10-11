@@ -312,11 +312,13 @@ export const UsersPage: React.FC = () => {
     };
 
     const handleDeleteUser = async () => {
-        if (!deleteTarget) return;
+        const target = deleteTarget;
+        if (!target) return;
         setDeletingUser(true);
         try {
-            await api.delete(`/users/${deleteTarget.id}`);
+            await api.delete(`/users/${target.id}`);
             toast.success("User deleted successfully.");
+            setUsers((prev) => prev.filter((u) => u.id !== target.id));
             setDeleteTarget(null);
             await fetchUsers();
             await fetchRolesAndPermissions();
@@ -394,11 +396,13 @@ export const UsersPage: React.FC = () => {
     };
 
     const handleDeleteRole = async () => {
-        if (!roleDeleteTarget) return;
+        const target = roleDeleteTarget;
+        if (!target) return;
         setRoleDeleting(true);
         try {
-            await api.delete(`/roles/${roleDeleteTarget.id}`);
+            await api.delete(`/roles/${target.id}`);
             toast.success("Role deleted successfully.");
+            setRoles((prev) => prev.filter((r) => r.id !== target.id));
             setRoleDeleteTarget(null);
             await fetchRolesAndPermissions();
         } catch (err: unknown) {

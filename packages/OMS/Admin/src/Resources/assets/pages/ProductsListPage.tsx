@@ -152,11 +152,13 @@ export const ProductsListPage: React.FC = () => {
     };
 
     const handleDelete = async () => {
-        if (!deleteTarget) return;
+        const target = deleteTarget;
+        if (!target) return;
         setDeleting(true);
         try {
-            await api.delete(`/products/${deleteTarget.id}`);
+            await api.delete(`/products/${target.id}`);
             toast.success("Product deleted successfully.");
+            setProducts((prev) => prev.filter((p) => p.id !== target.id));
             setDeleteTarget(null);
             await fetchProducts();
         } catch (err: unknown) {
