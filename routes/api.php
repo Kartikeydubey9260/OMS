@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
 use OMS\Admin\Http\Controllers\DashboardController;
+use OMS\Admin\Http\Controllers\DashboardReportController;
 use OMS\Core\Http\Controllers\AuditLogController;
 use OMS\Core\Http\Controllers\NotificationController;
 use OMS\Customers\Http\Controllers\CustomerController;
@@ -66,6 +67,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
     Route::get('/dashboard/status-distribution', [DashboardController::class, 'statusDistribution']);
     Route::get('/dashboard/revenue-trend', [DashboardController::class, 'revenueTrend']);
+    Route::get('/dashboard/reports', [DashboardReportController::class, 'index']);
+    Route::get('/dashboard/reports/export', [DashboardReportController::class, 'export']);
 
     // Audit logs (read only)
     Route::get('/audit-logs', [AuditLogController::class, 'index']);

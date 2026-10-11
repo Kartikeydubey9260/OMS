@@ -15,6 +15,6 @@ class AdminServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        $this->loadViewsFrom(__DIR__.'/../Resources/views', 'oms-admin');
     }
 }
