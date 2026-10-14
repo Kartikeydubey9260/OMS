@@ -6,6 +6,7 @@ namespace OMS\Core\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
 class InstallerCommand extends Command
@@ -37,7 +38,7 @@ class InstallerCommand extends Command
 
         $dbConnection = $this->choice(
             'DB_CONNECTION',
-            ['mysql', 'sqlite', 'pgsql', 'sqlsrv'],
+            ['mysql', 'sqlite'],
             0 // default to mysql
         );
 
@@ -53,6 +54,8 @@ class InstallerCommand extends Command
             $dbDatabase = $this->ask('DB_DATABASE', 'oms_db');
             $dbUsername = $this->ask('DB_USERNAME', 'root');
             $dbPassword = $this->secret('DB_PASSWORD (typing will be hidden)');
+        } else {
+            $dbDatabase = 'database/database.sqlite';
         }
 
         // 2. Create .env if it doesn't exist
@@ -78,6 +81,24 @@ class InstallerCommand extends Command
 
         // Clear config to ensure new env vars are loaded
         Artisan::call('config:clear');
+
+        // Apply the chosen connection to the running process so the migration
+        // below targets the selected database rather than the pre-existing .env.
+        config([
+            'database.default' => $dbConnection,
+            'database.connections.'.$dbConnection.'.database' => $dbDatabase,
+        ]);
+
+        if ($dbConnection !== 'sqlite') {
+            config([
+                'database.connections.'.$dbConnection.'.host' => $dbHost,
+                'database.connections.'.$dbConnection.'.port' => $dbPort,
+                'database.connections.'.$dbConnection.'.username' => $dbUsername,
+                'database.connections.'.$dbConnection.'.password' => $dbPassword,
+            ]);
+        }
+
+        DB::purge($dbConnection);
 
         // 4. Generate App Key
         $this->info('Generating application key...');

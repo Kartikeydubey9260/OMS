@@ -115,6 +115,8 @@ export const UsersPage: React.FC = () => {
     const [permStatus, setPermStatus] = useState<string>("");
 
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const fetchUsersSeqRef = useRef(0);
+    const fetchRolesSeqRef = useRef(0);
 
     const updateParams = useCallback(
         (updates: Record<string, string | number | undefined>) => {
@@ -138,6 +140,7 @@ export const UsersPage: React.FC = () => {
 
     const fetchUsers = useCallback(async () => {
         if (!isAdmin) return;
+        const seq = ++fetchUsersSeqRef.current;
         setLoading(true);
         setError(null);
         try {
@@ -152,30 +155,39 @@ export const UsersPage: React.FC = () => {
             params.append("per_page", String(perPage));
 
             const res = await api.get(`/users?${params.toString()}`);
+            if (seq !== fetchUsersSeqRef.current) return;
             setUsers(res.data || []);
             if (res.meta) {
                 setTotalPages(res.meta.last_page || 1);
                 setTotal(res.meta.total || 0);
             }
         } catch (err: unknown) {
+            if (seq !== fetchUsersSeqRef.current) return;
             setError(err instanceof Error ? err.message : "Unable to load users.");
         } finally {
-            setLoading(false);
+            if (seq === fetchUsersSeqRef.current) {
+                setLoading(false);
+            }
         }
     }, [isAdmin, searchParams, roleFilter, statusFilter, sort, direction, page, perPage]);
 
     const fetchRolesAndPermissions = useCallback(async () => {
         if (!isAdmin) return;
+        const seq = ++fetchRolesSeqRef.current;
         setRolesLoading(true);
         setRolesError(null);
         try {
             const [rolesRes, permsRes] = await Promise.all([api.get("/roles"), api.get("/permissions")]);
+            if (seq !== fetchRolesSeqRef.current) return;
             setRoles((rolesRes.data || []) as RoleItem[]);
             setPermissions((permsRes.data || []) as PermissionItem[]);
         } catch (err: unknown) {
+            if (seq !== fetchRolesSeqRef.current) return;
             setRolesError(err instanceof Error ? err.message : "Unable to load roles.");
         } finally {
-            setRolesLoading(false);
+            if (seq === fetchRolesSeqRef.current) {
+                setRolesLoading(false);
+            }
         }
     }, [isAdmin]);
 

@@ -55,6 +55,7 @@ export const OrdersListPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
 
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const fetchSeqRef = useRef(0);
     const canCreateOrder = hasRole(["admin", "super-admin", "manager"]);
 
     // Sync state with URL params
@@ -73,6 +74,7 @@ export const OrdersListPage: React.FC = () => {
     }, [setSearchParams]);
 
     const fetchOrders = useCallback(async () => {
+        const seq = ++fetchSeqRef.current;
         setLoading(true);
         setError(null);
         try {
@@ -90,6 +92,7 @@ export const OrdersListPage: React.FC = () => {
             params.append("per_page", String(perPage));
 
             const res = await api.get(`/orders?${params.toString()}`);
+            if (seq !== fetchSeqRef.current) return;
             setOrders(res.data || []);
             const meta = res.meta;
             if (meta) {
@@ -98,9 +101,12 @@ export const OrdersListPage: React.FC = () => {
                 setTotalPages(1);
             }
         } catch (err: unknown) {
+            if (seq !== fetchSeqRef.current) return;
             setError(err instanceof Error ? err.message : "Unable to load orders.");
         } finally {
-            setLoading(false);
+            if (seq === fetchSeqRef.current) {
+                setLoading(false);
+            }
         }
     }, [searchParams, statusFilter, priorityFilter, assigneeFilter, dateFrom, dateTo, sort, direction, page, perPage]);
 

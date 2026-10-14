@@ -17,7 +17,7 @@ Before setting up the project, ensure your environment meets the following requi
 - **PHP**: ^8.2 (or PHP 8.3+)
 - **Node.js**: ^20.19 (LTS recommended)
 - **Composer**: ^2.7
-- **Database**: SQLite (default for dev/testing), MySQL 8+, or PostgreSQL.
+- **Database**: SQLite (default for dev/testing) or MySQL 8+.
 
 ## Installation & Setup
 
@@ -48,7 +48,7 @@ php artisan oms:install
 
 This command will:
 - Prompt for your App Name and URL.
-- Let you choose your preferred database connection (MySQL, SQLite, etc.) via an interactive radio menu.
+- Let you choose your preferred database connection (MySQL or SQLite) via an interactive radio menu.
 - Securely prompt for your database credentials (passwords will be hidden as `*****`).
 - Create and populate your `.env` file automatically.
 - Generate your Laravel application key.

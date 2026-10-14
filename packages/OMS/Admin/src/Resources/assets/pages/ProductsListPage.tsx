@@ -53,6 +53,7 @@ export const ProductsListPage: React.FC = () => {
     const [deleting, setDeleting] = useState(false);
 
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const fetchSeqRef = useRef(0);
 
     const updateParams = useCallback(
         (updates: Record<string, string | number | undefined>) => {
@@ -75,6 +76,7 @@ export const ProductsListPage: React.FC = () => {
     );
 
     const fetchProducts = useCallback(async () => {
+        const seq = ++fetchSeqRef.current;
         setLoading(true);
         setError(null);
         try {
@@ -93,15 +95,19 @@ export const ProductsListPage: React.FC = () => {
             params.append("per_page", String(perPage));
 
             const res = await api.get(`/products?${params.toString()}`);
+            if (seq !== fetchSeqRef.current) return;
             setProducts(res.data || []);
             if (res.meta) {
                 setTotalPages(res.meta.last_page || 1);
                 setTotal(res.meta.total || 0);
             }
         } catch (err: unknown) {
+            if (seq !== fetchSeqRef.current) return;
             setError(err instanceof Error ? err.message : "Unable to load products.");
         } finally {
-            setLoading(false);
+            if (seq === fetchSeqRef.current) {
+                setLoading(false);
+            }
         }
     }, [searchParams, statusFilter, lowStock, sort, direction, page, perPage]);
 

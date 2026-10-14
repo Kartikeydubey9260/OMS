@@ -43,6 +43,7 @@ export const CustomersListPage: React.FC = () => {
     const [deleting, setDeleting] = useState(false);
 
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const fetchSeqRef = useRef(0);
 
     const canManage = hasRole(["admin", "super-admin", "manager"]);
     const canDelete = hasRole(["admin", "super-admin"]);
@@ -68,6 +69,7 @@ export const CustomersListPage: React.FC = () => {
     );
 
     const fetchCustomers = useCallback(async () => {
+        const seq = ++fetchSeqRef.current;
         setLoading(true);
         setError(null);
         try {
@@ -81,15 +83,19 @@ export const CustomersListPage: React.FC = () => {
             params.append("per_page", String(perPage));
 
             const res = await api.get(`/customers?${params.toString()}`);
+            if (seq !== fetchSeqRef.current) return;
             setCustomers(res.data || []);
             if (res.meta) {
                 setTotalPages(res.meta.last_page || 1);
                 setTotal(res.meta.total || 0);
             }
         } catch (err: unknown) {
+            if (seq !== fetchSeqRef.current) return;
             setError(err instanceof Error ? err.message : "Unable to load customers.");
         } finally {
-            setLoading(false);
+            if (seq === fetchSeqRef.current) {
+                setLoading(false);
+            }
         }
     }, [searchParams, statusFilter, sort, direction, page, perPage]);
 

@@ -159,6 +159,8 @@ export const DashboardPage: React.FC = () => {
     const [exporting, setExporting] = useState<string | null>(null);
 
     const fetchReportTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const fetchReportSeqRef = useRef(0);
+    const fetchTrendSeqRef = useRef(0);
 
     const fetchSummaryAndDist = async () => {
         try {
@@ -174,8 +176,10 @@ export const DashboardPage: React.FC = () => {
     };
 
     const fetchTrend = async (p: "day" | "week" | "month") => {
+        const seq = ++fetchTrendSeqRef.current;
         try {
             const res = await api.get<RevenueTrendItem[]>(`/dashboard/revenue-trend?period=${p}`);
+            if (seq !== fetchTrendSeqRef.current) return;
             setTrend(res.data || []);
         } catch {
             // Error handled
@@ -202,15 +206,20 @@ export const DashboardPage: React.FC = () => {
 
     const fetchReport = useCallback(
         async (f: ReportFilters) => {
+            const seq = ++fetchReportSeqRef.current;
             setReportLoading(true);
             setReportError(null);
             try {
                 const res = await api.get<ReportData>(`/dashboard/reports?${buildReportQuery(f, 10)}`);
+                if (seq !== fetchReportSeqRef.current) return;
                 setReport(res.data);
             } catch (err: unknown) {
+                if (seq !== fetchReportSeqRef.current) return;
                 setReportError(err instanceof ApiClientError ? err.message : "Unable to load reports.");
             } finally {
-                setReportLoading(false);
+                if (seq === fetchReportSeqRef.current) {
+                    setReportLoading(false);
+                }
             }
         },
         [buildReportQuery]
