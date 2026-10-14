@@ -104,10 +104,10 @@ test.describe("product edit & delete", () => {
 
         // A product without order history deletes cleanly.
         await page.getByTestId("products-search").fill(clean.sku);
-        await expect(page.getByTestId("product-row")).toHaveCount(1);
+        await expect(page.getByTestId("product-row")).toContainText(clean.sku);
         await page.getByTestId("product-delete").click();
         await page.getByTestId("product-delete-confirm").click();
-        await expect(page.getByTestId("toast").last()).toContainText("deleted");
+        await expect(page.getByTestId("toast").last()).toContainText("deleted successfully");
         await expect(page.getByTestId("product-row")).toHaveCount(0);
     });
 
