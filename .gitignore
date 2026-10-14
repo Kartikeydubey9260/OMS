@@ -29,6 +29,7 @@ yarn-error.log
 /qa-kit/e2e/test-results
 /qa-kit/e2e/playwright-report
 /qa-kit/e2e/blob-report
+/playwright-report
 
 skills/
 monorepo-template/
